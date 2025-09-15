@@ -1,0 +1,30 @@
+{
+  "meta": {
+    "event_name": "subscription_updated",
+    "custom_data": {},
+    "test_mode": true,
+    "webhook_id": "wh_9876543210"
+  },
+  "data": {
+    "id": "sub_1234567890",
+    "type": "subscription",
+    "attributes": {
+      "store_id": 12345,
+      "customer_id": "cus_9876543210",
+      "variant_id": 2222,
+      "order_id": "ord_5555",
+      "status": "active",
+      "renews_at": "2025-11-15T12:00:00Z",
+      "ends_at": null,
+      "trial_ends_at": null,
+      "paused_at": null,
+      "cancelled_at": null,
+      "created_at": "2025-09-15T10:00:00Z",
+      "updated_at": "2025-09-20T08:00:00Z",
+      "plan_name": "Enterprise Plan",
+      "plan_amount": 9900,
+      "plan_currency": "USD",
+      "user_email": "test.user@example.com"
+    }
+  }
+}

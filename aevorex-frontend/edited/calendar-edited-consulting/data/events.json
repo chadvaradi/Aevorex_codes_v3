@@ -1,0 +1,271 @@
+{
+  "accounts": [
+    {
+      "id": "1",
+      "email": "mikolaj@launchuicomponents.com",
+      "name": "Mikolaj (Work)",
+      "calendars": [
+        {
+          "id": "design-team",
+          "name": "Design Team",
+          "color": "indigo",
+          "events": [
+            {
+              "id": "1",
+              "name": "Design Review",
+              "start": "2024-01-17T09:00:00",
+              "end": "2024-01-17T10:00:00"
+            },
+            {
+              "id": "2",
+              "name": "UI Components Workshop",
+              "start": "2024-01-17T13:00:00",
+              "end": "2024-01-17T14:30:00"
+            },
+            {
+              "id": "3",
+              "name": "Design System Sync",
+              "start": "2024-01-18T11:00:00",
+              "end": "2024-01-18T12:00:00"
+            },
+            {
+              "id": "22",
+              "name": "Design Team Kickoff",
+              "start": "2024-01-15T10:00:00",
+              "end": "2024-01-15T11:30:00"
+            },
+            {
+              "id": "23",
+              "name": "UI Audit Session",
+              "start": "2024-01-16T14:00:00",
+              "end": "2024-01-16T15:30:00"
+            }
+          ]
+        },
+        {
+          "id": "product-team",
+          "name": "Product Team",
+          "color": "blue",
+          "events": [
+            {
+              "id": "4",
+              "name": "Product Roadmap Planning",
+              "start": "2024-01-17T10:30:00",
+              "end": "2024-01-17T12:00:00"
+            },
+            {
+              "id": "5",
+              "name": "Feature Prioritization",
+              "start": "2024-01-19T14:00:00",
+              "end": "2024-01-19T15:30:00"
+            },
+            {
+              "id": "6",
+              "name": "User Research Review",
+              "start": "2024-01-18T15:00:00",
+              "end": "2024-01-18T16:00:00"
+            },
+            {
+              "id": "24",
+              "name": "Q1 Strategy Meeting",
+              "start": "2024-01-15T13:00:00",
+              "end": "2024-01-15T14:30:00"
+            },
+            {
+              "id": "25",
+              "name": "Customer Feedback Review",
+              "start": "2024-01-16T09:30:00",
+              "end": "2024-01-16T11:00:00"
+            }
+          ]
+        },
+        {
+          "id": "engineering-team",
+          "name": "Engineering Team",
+          "color": "emerald",
+          "events": [
+            {
+              "id": "7",
+              "name": "Code Review",
+              "start": "2024-01-17T15:00:00",
+              "end": "2024-01-17T16:00:00"
+            },
+            {
+              "id": "8",
+              "name": "Sprint Planning",
+              "start": "2024-01-18T09:00:00",
+              "end": "2024-01-18T10:30:00"
+            },
+            {
+              "id": "9",
+              "name": "Tech Debt Discussion",
+              "start": "2024-01-19T11:00:00",
+              "end": "2024-01-19T12:00:00"
+            },
+            {
+              "id": "26",
+              "name": "Architecture Planning",
+              "start": "2024-01-15T15:00:00",
+              "end": "2024-01-15T16:30:00"
+            },
+            {
+              "id": "27",
+              "name": "Bug Triage",
+              "start": "2024-01-16T11:30:00",
+              "end": "2024-01-16T12:30:00"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "email": "contact@mikolajdobrucki.com",
+      "name": "Mikolaj (Personal)",
+      "calendars": [
+        {
+          "id": "personal",
+          "name": "Personal",
+          "color": "amber",
+          "events": [
+            {
+              "id": "10",
+              "name": "Gym",
+              "start": "2024-01-17T07:00:00",
+              "end": "2024-01-17T08:00:00"
+            },
+            {
+              "id": "11",
+              "name": "Dinner with Friends",
+              "start": "2024-01-17T19:00:00",
+              "end": "2024-01-17T21:00:00"
+            },
+            {
+              "id": "12",
+              "name": "Doctor Appointment",
+              "start": "2024-01-19T08:30:00",
+              "end": "2024-01-19T09:00:00"
+            },
+            {
+              "id": "13",
+              "name": "Weekend Trip Planning",
+              "start": "2024-01-18T19:00:00",
+              "end": "2024-01-18T20:00:00"
+            },
+            {
+              "id": "28",
+              "name": "Morning Run",
+              "start": "2024-01-15T07:00:00",
+              "end": "2024-01-15T08:00:00"
+            },
+            {
+              "id": "29",
+              "name": "Book Club",
+              "start": "2024-01-16T18:30:00",
+              "end": "2024-01-16T20:00:00"
+            },
+            {
+              "id": "32",
+              "name": "Coastal Family Retreat - Hotel Oceanview",
+              "start": "2024-01-20T00:00:00",
+              "end": "2024-01-20T23:59:59"
+            },
+            {
+              "id": "33",
+              "name": "Sunday Brunch with Parents",
+              "start": "2024-01-21T11:00:00",
+              "end": "2024-01-21T13:00:00"
+            },
+            {
+              "id": "34",
+              "name": "Photography Hike",
+              "start": "2024-01-21T15:00:00",
+              "end": "2024-01-21T17:30:00"
+            }
+          ]
+        },
+        {
+          "id": "holidays",
+          "name": "Public Holidays",
+          "color": "gray",
+          "events": [
+            {
+              "id": "14",
+              "name": "Martin Luther King Day",
+              "start": "2024-01-15T00:00:00",
+              "end": "2024-01-15T23:59:59"
+            },
+            {
+              "id": "15",
+              "name": "Presidents' Day",
+              "start": "2024-02-19T00:00:00",
+              "end": "2024-02-19T23:59:59"
+            },
+            {
+              "id": "16",
+              "name": "Memorial Day",
+              "start": "2024-05-27T00:00:00",
+              "end": "2024-05-27T23:59:59"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "email": "team@launchuicomponents.com",
+      "name": "Launch UI",
+      "calendars": [
+        {
+          "id": "company-events",
+          "name": "Company Events",
+          "color": "rose",
+          "events": [
+            {
+              "id": "17",
+              "name": "All Hands Meeting",
+              "start": "2024-01-17T16:30:00",
+              "end": "2024-01-17T17:30:00"
+            },
+            {
+              "id": "18",
+              "name": "Q1 Planning",
+              "start": "2024-01-18T13:00:00",
+              "end": "2024-01-18T14:30:00"
+            },
+            {
+              "id": "19",
+              "name": "Team Building Event",
+              "start": "2024-01-19T15:00:00",
+              "end": "2024-01-19T18:00:00"
+            },
+            {
+              "id": "20",
+              "name": "Product Launch Preparation",
+              "start": "2024-01-22T10:00:00",
+              "end": "2024-01-22T12:00:00"
+            },
+            {
+              "id": "21",
+              "name": "Company Anniversary Celebration",
+              "start": "2024-02-15T17:00:00",
+              "end": "2024-02-15T20:00:00"
+            },
+            {
+              "id": "30",
+              "name": "Quarterly Review",
+              "start": "2024-01-15T09:00:00",
+              "end": "2024-01-15T11:00:00"
+            },
+            {
+              "id": "31",
+              "name": "Investor Meeting",
+              "start": "2024-01-16T15:00:00",
+              "end": "2024-01-16T17:00:00"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

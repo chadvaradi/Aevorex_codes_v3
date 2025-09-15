@@ -1,0 +1,12 @@
+# általános
+.DS_Store
+node_modules/
+.env
+.env.*
+logs/
+__pycache__/
+.venv/
+.next/
+.vercel/
+
+.vercel

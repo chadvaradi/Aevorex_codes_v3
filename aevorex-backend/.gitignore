@@ -1,0 +1,15 @@
+# általános
+.DS_Store
+node_modules/
+
+.env.*
+logs/
+__pycache__/
+.venv/
+.next/
+.vercel/
+
+# Generated images
+/static/images/
+
+

@@ -1,0 +1,30 @@
+{
+  "meta": {
+    "event_name": "subscription_created",
+    "custom_data": {},
+    "test_mode": true,
+    "webhook_id": "wh_1234567890"
+  },
+  "data": {
+    "id": "sub_1234567890",
+    "type": "subscription",
+    "attributes": {
+      "store_id": 12345,
+      "customer_id": "cus_9876543210",
+      "variant_id": 1111,
+      "order_id": "ord_5555",
+      "status": "active",
+      "renews_at": "2025-10-15T12:00:00Z",
+      "ends_at": null,
+      "trial_ends_at": null,
+      "paused_at": null,
+      "cancelled_at": null,
+      "created_at": "2025-09-15T10:00:00Z",
+      "updated_at": "2025-09-15T10:00:00Z",
+      "plan_name": "Pro Plan",
+      "plan_amount": 4900,
+      "plan_currency": "USD",
+      "user_email": "test.user@example.com"
+    }
+  }
+}
