@@ -5,12 +5,11 @@ Settings for Google OAuth2 Authentication.
 import os
 from typing import Optional, ClassVar
 from pydantic import Field, field_validator
-from pydantic.types import SecretStr
 from pydantic.networks import AnyHttpUrl
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Use a shared logger instance for consistency
-from ..utils.logger_config import get_logger
+from backend.utils.logger_config import get_logger
 
 logger = get_logger(__name__)
 
@@ -26,14 +25,14 @@ class GoogleAuthSettings(BaseSettings):
     CLIENT_ID: Optional[str] = Field(
         "DUMMY_CLIENT_ID", description="Google OAuth Client ID"
     )
-    CLIENT_SECRET: Optional[SecretStr] = Field(
+    CLIENT_SECRET: Optional[str] = Field(
         "DUMMY_CLIENT_SECRET", description="Google OAuth Client Secret"
     )
     REDIRECT_URI: Optional[AnyHttpUrl] = Field(
         "http://localhost:8084/api/v1/auth/callback",
         description="Google OAuth Redirect URI",
     )
-    SECRET_KEY: Optional[SecretStr] = Field(
+    SECRET_KEY: Optional[str] = Field(
         "DUMMY_SECRET_KEY", description="Secret key for signing session cookies"
     )
 

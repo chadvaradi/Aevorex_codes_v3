@@ -246,6 +246,18 @@ class ECBStandardMixin:
             cache_key,
         )
 
+    async def get_ecb_hur(
+        self, start_date: Optional[date] = None, end_date: Optional[date] = None
+    ):
+        """Fetch Euro Area unemployment rate data via ECB HUR dataflow."""
+        cache_key = f"ecb:hur:{start_date}:{end_date or 'latest'}"
+        from backend.core.fetchers.macro.ecb_client import fetch_ecb_hur_data
+        
+        return await self._get_with_cache_fallback(
+            lambda: fetch_ecb_hur_data(self._cache, start_date, end_date),
+            cache_key,
+        )
+
     # --- Utility -----------------------------------------------------------
     @staticmethod
     def curve_to_csv(curve: Dict) -> str:

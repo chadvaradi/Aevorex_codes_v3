@@ -6,7 +6,7 @@ from pydantic import field_validator, BaseModel, Field, model_validator
 from pydantic.types import PositiveInt
 from pydantic_settings import SettingsConfigDict
 
-from .environment import EnvironmentSettings
+from backend.config.environment import EnvironmentSettings
 
 
 class UvicornSettings(BaseModel):

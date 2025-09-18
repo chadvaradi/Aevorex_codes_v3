@@ -8,6 +8,7 @@ from typing import Optional, Dict, Any
 from fastapi import Request
 
 from backend.utils.logger_config import get_logger
+from ..shared.response_builder import StandardResponseBuilder
 from .handlers.daily_handler import generate_daily_summary as daily_handler
 from .handlers.weekly_handler import generate_weekly_summary as weekly_handler
 from .handlers.monthly_handler import generate_monthly_summary as monthly_handler
@@ -33,23 +34,12 @@ async def generate_daily_summary(request: Request, target_date: Optional[date] =
         # Get default tickers for summary
         tickers = ["AAPL", "MSFT", "GOOGL", "TSLA", "NVDA"]
         
-        # Mock AI service and cache for now
-        # TODO: Implement proper AI service and cache integration
-        ai_service = None
-        http_client = None
-        cache = None
+        # Summary endpoint is currently disabled – MCP integration required
+        logger.warning("Summary endpoint is currently disabled – MCP integration required")
         
-        result = await daily_handler(ai_service, http_client, cache, tickers)
-        
-        return {
-            "type": "daily",
-            "period": {
-                "start": target_date.isoformat(),
-                "end": target_date.isoformat()
-            },
-            "summary": result,
-            "generated_at": datetime.now().isoformat()
-        }
+        return StandardResponseBuilder.error(
+            "Summary not yet implemented, MCP integration required"
+        )
         
     except Exception as e:
         logger.error(f"Failed to generate daily summary: {e}", exc_info=True)
@@ -76,23 +66,12 @@ async def generate_weekly_summary(request: Request, week_start: Optional[date] =
         # Get default tickers for summary
         tickers = ["AAPL", "MSFT", "GOOGL", "TSLA", "NVDA"]
         
-        # Mock AI service and cache for now
-        # TODO: Implement proper AI service and cache integration
-        ai_service = None
-        http_client = None
-        cache = None
+        # Summary endpoint is currently disabled – MCP integration required
+        logger.warning("Summary endpoint is currently disabled – MCP integration required")
         
-        result = await weekly_handler(ai_service, http_client, cache, tickers)
-        
-        return {
-            "type": "weekly",
-            "period": {
-                "start": week_start.isoformat(),
-                "end": (week_start + timedelta(days=6)).isoformat()
-            },
-            "summary": result,
-            "generated_at": datetime.now().isoformat()
-        }
+        return StandardResponseBuilder.error(
+            "Summary not yet implemented, MCP integration required"
+        )
         
     except Exception as e:
         logger.error(f"Failed to generate weekly summary: {e}", exc_info=True)
@@ -119,24 +98,12 @@ async def generate_custom_summary(request: Request, start_date: date, end_date: 
         # Get default tickers for summary
         tickers = ["AAPL", "MSFT", "GOOGL", "TSLA", "NVDA"]
         
-        # Mock AI service and cache for now
-        # TODO: Implement proper AI service and cache integration
-        ai_service = None
-        http_client = None
-        cache = None
+        # Summary endpoint is currently disabled – MCP integration required
+        logger.warning("Summary endpoint is currently disabled – MCP integration required")
         
-        # Use monthly handler for custom summaries
-        result = await monthly_handler(ai_service, http_client, cache, tickers)
-        
-        return {
-            "type": "custom",
-            "period": {
-                "start": start_date.isoformat(),
-                "end": end_date.isoformat()
-            },
-            "summary": result,
-            "generated_at": datetime.now().isoformat()
-        }
+        return StandardResponseBuilder.error(
+            "Summary not yet implemented, MCP integration required"
+        )
         
     except Exception as e:
         logger.error(f"Failed to generate custom summary: {e}", exc_info=True)

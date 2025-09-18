@@ -62,47 +62,102 @@ async def fetch_euribor_rates_from_web(
 
             soup = BeautifulSoup(response.text, "html.parser")
 
-            # Find the rates table
-            rates_table = soup.find("table")
+            # Find the rates table - try multiple selectors
+            rates_table = None
+            for selector in ["table.table.table-striped", "table.table", "table", ".table", "#rates-table", "div table"]:
+                rates_table = soup.select_one(selector)
+                if rates_table:
+                    logger.debug(f"Found rates table with selector: {selector}")
+                    break
+            
             if not rates_table:
-                raise EuriborScrapingError("Could not find rates table on webpage")
-
-            # Extract current rates
-            current_rates = {}
-            rows = rates_table.find_all("tr")
-
-            for row in rows[1:]:  # Skip header row
-                cells = row.find_all(["td", "th"])
-                if len(cells) >= 2:
-                    # First cell contains the maturity text
-                    maturity_cell = cells[0]
-                    rate_cell = cells[1]  # Most recent rate (today's column)
-
-                    # Extract maturity from text
-                    maturity_text = maturity_cell.get_text(strip=True)
-                    rate_text = rate_cell.get_text(strip=True)
-
-                    logger.debug(f"Processing row: '{maturity_text}' -> '{rate_text}'")
-
-                    # Find matching tenor
-                    for tenor, description in EURIBOR_MATURITY_MAP.items():
-                        if description.lower() in maturity_text.lower():
-                            try:
-                                # Extract rate value (remove % sign and spaces)
-                                rate_value = float(
-                                    rate_text.replace("%", "").replace(" ", "").strip()
-                                )
-                                current_rates[tenor] = rate_value
-                                logger.debug(f"✅ Parsed {tenor}: {rate_value}%")
+                # Try to find rates in the main content area
+                content_area = soup.find("div", class_="content") or soup.find("main") or soup.find("body")
+                if content_area:
+                    # Look for rate patterns in the text
+                    text_content = content_area.get_text()
+                    logger.debug(f"Searching for rates in content: {text_content[:500]}...")
+                    
+                    # Try to extract rates using regex patterns
+                    import re
+                    rate_patterns = [
+                        r"Euribor\s+(\d+)\s+(?:week|month|months)\s*[:\-]?\s*([\d.]+)\s*%",
+                        r"(\d+)\s+(?:week|month|months)\s*[:\-]?\s*([\d.]+)\s*%",
+                        r"([\d.]+)\s*%"
+                    ]
+                    
+                    current_rates = {}
+                    for pattern in rate_patterns:
+                        matches = re.findall(pattern, text_content, re.IGNORECASE)
+                        if matches:
+                            logger.debug(f"Found matches with pattern {pattern}: {matches}")
+                            for match in matches:
+                                if len(match) == 2:
+                                    maturity, rate = match
+                                    try:
+                                        rate_value = float(rate)
+                                        # Map maturity to tenor
+                                        if "week" in maturity.lower():
+                                            current_rates["1W"] = rate_value
+                                        elif "1" in maturity and "month" in maturity.lower():
+                                            current_rates["1M"] = rate_value
+                                        elif "3" in maturity and "month" in maturity.lower():
+                                            current_rates["3M"] = rate_value
+                                        elif "6" in maturity and "month" in maturity.lower():
+                                            current_rates["6M"] = rate_value
+                                        elif "12" in maturity and "month" in maturity.lower():
+                                            current_rates["12M"] = rate_value
+                                    except ValueError:
+                                        continue
+                            if current_rates:
                                 break
-                            except (ValueError, AttributeError) as e:
-                                logger.warning(
-                                    f"Could not parse rate for {tenor}: '{rate_text}' - {e}"
-                                )
-                    else:
-                        logger.debug(f"No matching tenor found for: '{maturity_text}'")
+                
+                if not current_rates:
+                    raise EuriborScrapingError("Could not find rates table or rate patterns on webpage")
+            else:
+                # Extract current rates from table
+                current_rates = {}
+                rows = rates_table.find_all("tr")
+
+                for row in rows:  # Process all rows
+                    cells = row.find_all(["td", "th"])
+                    if len(cells) >= 2:
+                        # First cell contains the maturity text (may be in a link)
+                        maturity_cell = cells[0]
+                        rate_cell = cells[1]  # Rate value
+
+                        # Extract maturity from text (handle both direct text and links)
+                        maturity_link = maturity_cell.find("a")
+                        if maturity_link:
+                            maturity_text = maturity_link.get_text(strip=True)
+                        else:
+                            maturity_text = maturity_cell.get_text(strip=True)
+                        
+                        rate_text = rate_cell.get_text(strip=True)
+
+                        logger.debug(f"Processing row: '{maturity_text}' -> '{rate_text}'")
+
+                        # Find matching tenor
+                        for tenor, description in EURIBOR_MATURITY_MAP.items():
+                            if description.lower() in maturity_text.lower():
+                                try:
+                                    # Extract rate value (remove % sign and spaces)
+                                    rate_value = float(
+                                        rate_text.replace("%", "").replace(" ", "").strip()
+                                    )
+                                    current_rates[tenor] = rate_value
+                                    logger.debug(f"✅ Parsed {tenor}: {rate_value}%")
+                                    break
+                                except (ValueError, AttributeError) as e:
+                                    logger.warning(
+                                        f"Could not parse rate for {tenor}: '{rate_text}' - {e}"
+                                    )
+                        else:
+                            logger.debug(f"No matching tenor found for: '{maturity_text}'")
 
             if not current_rates:
+                # Debug: log the HTML content to understand what's happening
+                logger.error(f"No Euribor rates found. HTML content preview: {response.text[:1000]}")
                 raise EuriborScrapingError(
                     "No Euribor rates could be parsed from webpage"
                 )

@@ -32,11 +32,7 @@ router = APIRouter(prefix="/auth")
 # --- Google OAuth2 Settings ---
 # Note: These should be populated via environment variables
 CLIENT_ID = settings.GOOGLE_AUTH.CLIENT_ID
-CLIENT_SECRET = (
-    settings.GOOGLE_AUTH.CLIENT_SECRET.get_secret_value()
-    if settings.GOOGLE_AUTH.CLIENT_SECRET
-    else None
-)
+CLIENT_SECRET = settings.GOOGLE_AUTH.CLIENT_SECRET
 REDIRECT_URI = (
     str(settings.GOOGLE_AUTH.REDIRECT_URI)
     if settings.GOOGLE_AUTH.REDIRECT_URI

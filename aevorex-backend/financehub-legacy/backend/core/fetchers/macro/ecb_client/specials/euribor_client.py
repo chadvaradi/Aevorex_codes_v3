@@ -80,8 +80,30 @@ async def fetch_official_euribor_rates(
         if not result:
             raise EuriborClientError("No Euribor rates could be scraped")
 
-        logger.info(f"Successfully fetched Euribor data for {len(result)} dates")
-        return result
+        # Normalize the scraped data
+        normalized_result = {}
+        for date_str, rates in result.items():
+            normalized_rates = {}
+            for tenor, rate in rates.items():
+                try:
+                    # Normalize rate value (remove %, convert to float)
+                    if isinstance(rate, str):
+                        cleaned_rate = rate.strip().rstrip('%').strip().replace(',', '.')
+                        normalized_rates[tenor] = float(cleaned_rate)
+                    else:
+                        normalized_rates[tenor] = float(rate)
+                except (ValueError, TypeError) as e:
+                    logger.warning(f"Failed to normalize rate for {tenor}: {rate} - {e}")
+                    continue
+            
+            if normalized_rates:
+                normalized_result[date_str] = normalized_rates
+
+        if not normalized_result:
+            raise EuriborClientError("No valid Euribor rates could be parsed from scraped data")
+
+        logger.info(f"Successfully fetched and normalized Euribor data for {len(normalized_result)} dates")
+        return normalized_result
 
     except Exception as e:
         logger.error(f"Failed to fetch Euribor rates via web scraping: {e}")
@@ -100,8 +122,30 @@ async def get_latest_euribor_rates(
         if data:
             # Get the latest date's rates
             latest_date = max(data.keys())
-            return data[latest_date]
-        return {}
+            latest_rates = data[latest_date]
+            
+            # Normalize the rates to ensure they are floats
+            normalized_rates = {}
+            for tenor, rate in latest_rates.items():
+                try:
+                    if isinstance(rate, str):
+                        cleaned_rate = rate.strip().rstrip('%').strip().replace(',', '.')
+                        normalized_rates[tenor] = float(cleaned_rate)
+                    else:
+                        normalized_rates[tenor] = float(rate)
+                except (ValueError, TypeError) as e:
+                    logger.warning(f"Failed to normalize rate for {tenor}: {rate} - {e}")
+                    continue
+            
+            if normalized_rates:
+                logger.info(f"Successfully normalized {len(normalized_rates)} Euribor rates: {list(normalized_rates.keys())}")
+                return normalized_rates
+            else:
+                logger.warning("No valid rates found after normalization")
+                return {}
+        else:
+            logger.warning("No data returned from fetch_official_euribor_rates")
+            return {}
     except Exception as e:
         logger.error(f"Failed to get latest Euribor rates: {e}")
         raise EuriborClientError(f"Failed to get latest rates: {e}")

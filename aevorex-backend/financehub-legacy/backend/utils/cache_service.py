@@ -5,22 +5,23 @@ Enhanced Redis Cache Service with improved connection handling
 import json
 import time
 from typing import Optional, Union
-import redis.asyncio as redis
-from redis.exceptions import ConnectionError
-from backend.utils.logger_config import get_logger
+import os
 
 # -----------------------------------------------------------------------------
 # Conditional CacheService implementation (Redis vs. in-memory)
 # -----------------------------------------------------------------------------
 import os
 
-# NOTE: we evaluate the desired cache mode *before* importing heavy Redis deps.
-_CACHE_MODE = os.getenv("FINANCEHUB_CACHE_MODE", "redis").lower().strip()
+_CACHE_MODE = os.getenv("FINANCEHUB_CACHE_MODE", "memory").lower().strip()  # Default to memory for MCP testing
 
 if _CACHE_MODE == "memory":
     # ---------------------------------------------------------------------
     # Lightweight in-memory fallback – avoids Redis dependency for dev setups
     # ---------------------------------------------------------------------
+
+    from typing import Any
+    from backend.utils.logger_config import get_logger
+    logger = get_logger(__name__)
 
     class CacheService:  # type: ignore[override]  # noqa: D401 – simple stub
         """Very thin in-memory cache replacement for local dev."""
@@ -31,14 +32,25 @@ if _CACHE_MODE == "memory":
             return cls()
 
         def __init__(self):
-            self._store: dict[str, str] = {}
+            self._store: dict[str, tuple[Any, float]] = {}  # (value, expiry_timestamp)
 
         async def get(self, key: str):
-            return self._store.get(key)
+            if key not in self._store:
+                return None
+            
+            value, expiry = self._store[key]
+            current_time = time.time()
+            
+            if current_time > expiry:
+                # Expired, remove from cache
+                del self._store[key]
+                return None
+            
+            return value
 
         async def set(self, key: str, value, ttl: int = 300):  # noqa: D401
-            # TTL ignored in simple dict cache
-            self._store[key] = value
+            expiry_time = time.time() + ttl
+            self._store[key] = (value, expiry_time)
             return True
 
         async def delete(self, key: str):
@@ -46,7 +58,7 @@ if _CACHE_MODE == "memory":
             return True
 
         async def exists(self, key: str):
-            return key in self._store
+            return bool(key in self._store)
 
         async def close(self):  # noqa: D401
             self._store.clear()
@@ -83,10 +95,9 @@ else:
     # ---------------------------------------------------------------------
     # Redis implementation (original heavy-duty cache service)
     # ---------------------------------------------------------------------
-    from redis.exceptions import ConnectionError
     import redis.asyncio as redis
+    from redis.exceptions import ConnectionError
     from backend.utils.logger_config import get_logger
-
     logger = get_logger(__name__)
 
     class CacheService:
@@ -174,24 +185,10 @@ else:
             # Special case: return memory cache for development
             if redis_host == "memory":
                 logger.info("[CacheService.create] Creating memory cache instance")
-                # Import the memory cache implementation
-                # Force the import to get the memory version
-                import os
-
-                old_env = os.environ.get("FINBOT_CACHE_MODE")
-                os.environ["FINBOT_CACHE_MODE"] = "memory"
-                try:
-                    # Re-import to get memory version
-                    import importlib
-                    import backend.utils.cache_service as cache_module
-
-                    importlib.reload(cache_module)
-                    return await cache_module.CacheService.create()
-                finally:
-                    if old_env:
-                        os.environ["FINBOT_CACHE_MODE"] = old_env
-                    else:
-                        os.environ.pop("FINBOT_CACHE_MODE", None)
+                os.environ["FINANCEHUB_CACHE_MODE"] = "memory"
+                # Import the memory cache implementation directly and create an instance
+                from backend.utils.cache_service import CacheService as MemoryCacheService
+                return await MemoryCacheService.create()
 
             logger.info(
                 f"[CacheService.create] Creating instance for {redis_host}:{redis_port}"
@@ -392,10 +389,6 @@ else:
                     )
                 return None
 
-            except Exception as e:
-                logger.error(f"[CacheService(Redis)] [GET:{key}] Error: {e}")
-                return None
-
         async def set(
             self, key: str, value: Union[str, dict, list], ttl: Optional[int] = None
         ) -> bool:
@@ -433,10 +426,6 @@ else:
                     logger.error(
                         f"[CacheService(Redis)] [SET:{key}] Reconnection failed: {reconnect_error}"
                     )
-                return False
-
-            except Exception as e:
-                logger.error(f"[CacheService(Redis)] [SET:{key}] Error: {e}")
                 return False
 
         async def delete(self, key: str) -> bool:
@@ -481,3 +470,8 @@ else:
 
 # Global cache instance
 cache_service = CacheService()
+
+# Dependency injection function for FastAPI
+async def get_cache_service() -> CacheService:
+    """Get cache service instance for dependency injection"""
+    return cache_service

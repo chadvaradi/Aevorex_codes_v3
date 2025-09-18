@@ -11,9 +11,9 @@ from typing import Dict, List, Tuple
 # -----------------------
 # ✅ Infláció (HICP)
 # -----------------------
-KEY_ECB_HICP_OVERALL = "M.U2.N.000000.4.ANR"  # ECB, monthly, headline HICP - Overall index
-KEY_ECB_HICP_CORE = "M.U2.N.XEF000.4.ANR"  # ECB, monthly, core HICP - Excluding energy and food
-KEY_ECB_HICP_ENERGY = "M.U2.N.072000.4.ANR"  # ECB, monthly, HICP - Energy component
+KEY_ECB_HICP_OVERALL = "ICP.M.U2.N.000000.4.ANR"  # ECB, monthly, headline HICP - Overall index
+KEY_ECB_HICP_CORE = "ICP.M.U2.N.XEF000.4.ANR"  # ECB, monthly, core HICP - Excluding energy and food
+KEY_ECB_HICP_ENERGY = "ICP.M.U2.N.072000.4.ANR"  # ECB, monthly, HICP - Energy component
 KEY_ECB_HICP_TOTAL = KEY_ECB_HICP_OVERALL  # Alias for HICP Total
 
 # -----------------------
@@ -236,7 +236,7 @@ KEY_ECB_FX_EUR_CNY = "EXR.D.CNY.EUR.SP00.A"
 # -----------------------
 # ECB HTTP Client Configuration
 # -----------------------
-ECB_BASE_URL = "https://sdw-wsrest.ecb.europa.eu/service/data"
+ECB_BASE_URL = "https://data.ecb.europa.eu/service/data"
 ECB_REQUEST_HEADERS = {
     "Accept": "application/vnd.sdmx.data+json;version=1.0.0",
     "User-Agent": "FinanceHub-ECB-Client/1.0"
@@ -307,7 +307,7 @@ ECB_DATAFLOWS: Dict[str, Dict[str, any]] = {
     },
     # Harmonised Index of Consumer Prices
     "hicp": {
-        "dataflow": "ICP",
+        "dataflow": "ICP",  # ECB SDMX dataflow for HICP
         "series": [
             ("HICP_Total", KEY_ECB_HICP_TOTAL),
             ("HICP_Core", KEY_ECB_HICP_CORE),
@@ -317,6 +317,18 @@ ECB_DATAFLOWS: Dict[str, Dict[str, any]] = {
             "description": "ECB Harmonised Index of Consumer Prices",
             "frequency": "monthly",
             "source": "ECB SDMX",
+        },
+    },
+    # Unemployment Rate
+    "hur": {
+        "dataflow": "LFSI",
+        "series": [
+            ("Unemployment_Rate", KEY_ECB_UNEMPLOYMENT),
+        ],
+        "metadata": {
+            "description": "Euro Area Unemployment Rate",
+            "frequency": "monthly",
+            "source": "Eurostat via ECB SDMX",
         },
     },
     # Retail Payment Statistics

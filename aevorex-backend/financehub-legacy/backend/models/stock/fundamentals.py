@@ -28,7 +28,7 @@ logger = logging.getLogger("aevorex_finbot.models.stock_fundamentals")
 
 class RatingPoint(BaseModel):
     model_config = ConfigDict(
-        populate_by_name=True, extra="ignore", validate_assignment=True
+        extra="ignore", validate_assignment=True
     )
     symbol: str = Field(..., description="Stock symbol (uppercase).")
     date: Date = Field(..., description="Rating date.")
@@ -53,7 +53,7 @@ class RatingPoint(BaseModel):
 
 class CompanyOverview(BaseModel):
     model_config = ConfigDict(
-        extra="ignore", validate_assignment=True, populate_by_name=True
+        extra="ignore", validate_assignment=True
     )
     symbol: str
     asset_type: Optional[str] = Field(None, alias="AssetType")
@@ -91,7 +91,7 @@ class FinancialsData(BaseModel):
 
 
 class EarningsPeriodData(BaseModel):
-    model_config = ConfigDict(extra="ignore", populate_by_name=True)
+    model_config = ConfigDict(extra="ignore")
     date: Optional[Date] = Field(None, description="Period end date.")
     eps_actual: Optional[float] = Field(None, alias="epsActual")
     eps_estimate: Optional[float] = Field(None, alias="epsEstimate")

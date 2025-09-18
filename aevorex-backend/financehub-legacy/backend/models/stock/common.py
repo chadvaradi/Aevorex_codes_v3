@@ -88,7 +88,7 @@ class ErrorResponse(BaseModel):
 class NewsItem(BaseModel):
     """Model representing a single news item."""
 
-    model_config = ConfigDict(populate_by_name=True, extra="ignore")
+    model_config = ConfigDict(extra="ignore")
 
     id: Optional[str] = Field(None, description="Unique identifier for the news item.")
     title: Optional[str] = Field(None, description="News item title.")

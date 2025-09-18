@@ -25,6 +25,9 @@ from .endpoints.search.search_router import router as search_router
 from .endpoints.summary.summary_router import router as summary_router
 from .endpoints.tradingview.tradingview_router import router as tradingview_router
 
+# Well-known endpoints for MCP compatibility
+from .endpoints.well_known.well_known_router import router as well_known_router
+
 # Billing endpoints
 from .endpoints.billing.lemonsqueezy_router import router as billing_router
 
@@ -67,6 +70,9 @@ api_router.include_router(chat_router, prefix="/chat", tags=["Chat"])
 api_router.include_router(search_router, prefix="/search", tags=["Search"])
 api_router.include_router(summary_router, prefix="/summary", tags=["Summary"])
 api_router.include_router(tradingview_router, prefix="/tradingview", tags=["TradingView"])
+
+# Well-known endpoints for MCP compatibility
+api_router.include_router(well_known_router, prefix="", tags=["Well-Known"])
 
 # Billing router
 api_router.include_router(billing_router, prefix="", tags=["Billing"])

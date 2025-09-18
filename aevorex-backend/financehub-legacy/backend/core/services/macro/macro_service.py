@@ -99,3 +99,66 @@ class MacroDataService(ECBStandardMixin, BaseMacroService):
             if asyncio.get_event_loop().is_running()
             else None,
         }
+
+    async def get_ecb_flow_data(
+        self, flow: str, start_date: Optional[date] = None, end_date: Optional[date] = None
+    ) -> dict:
+        """Generic method to fetch ECB dataflow data.
+        
+        Args:
+            flow: ECB dataflow name (e.g., 'hicp', 'hur', 'bls', 'cbd')
+            start_date: Optional start date for data
+            end_date: Optional end date for data
+            
+        Returns:
+            Dict with ECB dataflow data
+            
+        Raises:
+            RuntimeError: If ECB client is not configured or flow not supported
+        """
+        if not hasattr(self, "ecb_client") or self.ecb_client is None:
+            raise RuntimeError("ECB client not configured")
+
+        logger.info(f"Fetching ECB {flow} dataflow from {start_date} to {end_date}")
+        
+        # Map flow names to service methods
+        flow_method_map = {
+            "hicp": self.get_ecb_hicp,
+            "hur": self.get_ecb_hur,  # Unemployment rate
+            "bls": self.get_ecb_bls,
+            "cbd": self.get_ecb_cbd,
+            "ciss": self.get_ecb_ciss,
+            "rpp": self.get_ecb_rpp,
+            "trd": self.get_ecb_trd,
+            "irs": self.get_ecb_irs,
+            "mir": self.get_ecb_mir,
+            "ivf": self.get_ecb_ivf,
+            "spf": self.get_ecb_spf,
+            "pss": self.get_ecb_pss,
+            "cpp": self.get_ecb_cpp,
+        }
+        
+        # Get the appropriate service method
+        service_method = flow_method_map.get(flow)
+        if not service_method:
+            raise RuntimeError(f"ECB dataflow '{flow}' not supported. Available flows: {list(flow_method_map.keys())}")
+        
+        # Fetch data using the appropriate method
+        try:
+            data = await service_method(start_date, end_date)
+            return {
+                "status": "success",
+                "flow": flow,
+                "data": data,
+                "data_source": "ECB SDMX API",
+                "start_date": start_date,
+                "end_date": end_date
+            }
+        except Exception as e:
+            logger.error(f"Error fetching ECB {flow} data: {e}")
+            return {
+                "status": "error",
+                "flow": flow,
+                "message": f"Failed to fetch ECB {flow} data: {str(e)}",
+                "data": None
+            }

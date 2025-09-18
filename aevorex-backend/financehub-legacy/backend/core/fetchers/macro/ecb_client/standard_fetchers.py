@@ -46,6 +46,7 @@ _STANDARD_FLOWS = [
     "cbd",
     "ciss",
     "hicp",
+    "hur",  # Unemployment rate
     "rpp",
     "trd",
     "irs",

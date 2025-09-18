@@ -4,6 +4,8 @@
 #
 #    pip-compile requirements.in
 #
+xlrd>=2.0.1
+parsel>=1.8.0
 aiocache[redis]==0.12.3
     # via -r requirements.in
 apscheduler==3.10.4
@@ -132,7 +134,7 @@ markupsafe==3.0.2
     #   werkzeug
 multitasking==0.0.11
     # via yfinance
-numpy==1.26.4
+numpy>=2.2.6
     # via
     #   -r requirements.in
     #   pandas
@@ -152,12 +154,12 @@ packaging==24.2
     #   langsmith
     #   limits
     #   pytest
-pandas==2.3.0
+pandas>=2.3.2
     # via
     #   -r requirements.in
     #   pandas-ta
     #   yfinance
-pandas-ta==0.3.14b0
+pandas-ta==0.4.71b0
     # via -r requirements.in
 peewee==3.18.1
     # via yfinance
@@ -232,7 +234,8 @@ requests==2.32.4
 requests-oauthlib==1.4.0
     # via -r requirements.in
 requests-toolbelt==1.0.0
-    # via langsmith
+pyjwt==2.9.0
+    # JWT token handling
 ruff==0.12.2
     # via -r requirements.in
 scikit-learn==1.7.0
