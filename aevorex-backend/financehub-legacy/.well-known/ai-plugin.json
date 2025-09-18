@@ -1,0 +1,22 @@
+
+
+{
+  "schema_version": "v1",
+  "name_for_human": "FinanceHub API",
+  "name_for_model": "financehub_api",
+  "description_for_human": "Professional equity research API with real-time market data, fundamentals, and macroeconomic indicators",
+  "description_for_model": "FinanceHub provides comprehensive financial data including stocks, crypto, forex, fundamentals, and macro indicators. All endpoints return MCP-ready responses with standardized metadata.",
+  "auth": {
+    "type": "oauth",
+    "authorization_url": "http://localhost:8084/oauth/authorize",
+    "token_url": "http://localhost:8084/oauth/token",
+    "scope": "read:data read:fundamentals read:macro"
+  },
+  "api": {
+    "type": "openapi",
+    "url": "http://localhost:8084/.well-known/openapi.yaml"
+  },
+  "logo_url": "http://localhost:8084/logo.png",
+  "contact_email": "support@aevorex.com",
+  "legal_info_url": "https://aevorex.com/legal"
+}

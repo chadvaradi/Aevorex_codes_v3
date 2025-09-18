@@ -1,0 +1,1545 @@
+openapi: 3.1.0
+info:
+  title: FinanceHub EODHD API
+  version: 0.1.0
+paths:
+  /api/v1/eodhd/crypto/list:
+    get:
+      tags: [EODHD - Crypto]
+      summary: List Cryptocurrencies
+      description: Get a comprehensive list of all available cryptocurrencies from EODHD API with real-time market data
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '404':
+          description: Resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/eodhd/crypto/{symbol}/quote:
+    get:
+      tags: [EODHD - Crypto]
+      summary: Get Crypto Quote
+      description: Retrieve real-time cryptocurrency price quote from EODHD API
+      parameters:
+        - name: symbol
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '404':
+          description: Resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/eodhd/crypto/{symbol}/eod:
+    get:
+      tags: [EODHD - Crypto]
+      summary: Get Crypto End-of-Day Data
+      description: Retrieve end-of-day cryptocurrency market data from EODHD API
+      parameters:
+        - name: symbol
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '404':
+          description: Resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/eodhd/crypto/{symbol}/intraday:
+    get:
+      tags: [EODHD - Crypto]
+      summary: Get Crypto Intraday Data
+      description: Retrieve intraday cryptocurrency market data from EODHD API
+      parameters:
+        - name: symbol
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '404':
+          description: Resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/eodhd/crypto/{symbol}/history:
+    get:
+      tags: [EODHD - Crypto]
+      summary: Get Crypto Historical Data
+      description: Retrieve historical cryptocurrency market data from EODHD API
+      parameters:
+        - name: symbol
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '404':
+          description: Resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/eodhd/crypto/{symbol}/splits:
+    get:
+      tags: [EODHD - Crypto]
+      summary: Get Crypto Splits
+      description: Retrieve cryptocurrency stock splits data from EODHD API
+      parameters:
+        - name: symbol
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '404':
+          description: Resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/eodhd/crypto/{symbol}/dividends:
+    get:
+      tags: [EODHD - Crypto]
+      summary: Get Crypto Dividends
+      description: Retrieve cryptocurrency dividend data from EODHD API
+      parameters:
+        - name: symbol
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '404':
+          description: Resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/eodhd/crypto/{symbol}/adjusted:
+    get:
+      tags: [EODHD - Crypto]
+      summary: Get Adjusted Crypto Data
+      parameters:
+        - name: symbol
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  meta:
+                    type: object
+                    properties:
+                      provider:
+                        type: string
+                        enum: [eodhd]
+                      mcp_ready:
+                        type: boolean
+                        default: true
+                      data_type:
+                        type: string
+                        enum: [crypto_adjusted]
+                      cache_status:
+                        type: string
+                      last_updated:
+                        type: string
+                        format: date-time
+                  data:
+                    type: object
+        '404':
+          description: Resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/eodhd/stock/eod:
+    get:
+      tags: [EODHD - Stock]
+      summary: Get Stock End-of-Day Data
+      description: Retrieve end-of-day stock market data including OHLCV prices, volume, and market indicators for comprehensive equity analysis
+      parameters:
+        - name: symbol
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  meta:
+                    type: object
+                    properties:
+                      provider:
+                        type: string
+                        enum: [eodhd]
+                      mcp_ready:
+                        type: boolean
+                        default: true
+                      data_type:
+                        type: string
+                        enum: [stock_eod]
+                      cache_status:
+                        type: string
+                      last_updated:
+                        type: string
+                        format: date-time
+                  data:
+                    type: object
+        '404':
+          description: Resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/eodhd/stock/intraday:
+    get:
+      tags: [EODHD - Stock]
+      summary: Get Stock Intraday Data
+      parameters:
+        - name: symbol
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  meta:
+                    type: object
+                    properties:
+                      provider:
+                        type: string
+                        enum: [eodhd]
+                      mcp_ready:
+                        type: boolean
+                        default: true
+                      data_type:
+                        type: string
+                        enum: [stock_intraday]
+                      cache_status:
+                        type: string
+                      last_updated:
+                        type: string
+                        format: date-time
+                  data:
+                    type: object
+        '404':
+          description: Resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/eodhd/stock/splits:
+    get:
+      tags: [EODHD - Stock]
+      summary: Get Stock Splits
+      parameters:
+        - name: symbol
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  meta:
+                    type: object
+                    properties:
+                      provider:
+                        type: string
+                        enum: [eodhd]
+                      mcp_ready:
+                        type: boolean
+                        default: true
+                      data_type:
+                        type: string
+                        enum: [stock_splits]
+                      cache_status:
+                        type: string
+                      last_updated:
+                        type: string
+                        format: date-time
+                  data:
+                    type: object
+        '404':
+          description: Resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/eodhd/stock/dividends:
+    get:
+      tags: [EODHD - Stock]
+      summary: Get Stock Dividends
+      parameters:
+        - name: symbol
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  meta:
+                    type: object
+                    properties:
+                      provider:
+                        type: string
+                        enum: [eodhd]
+                      mcp_ready:
+                        type: boolean
+                        default: true
+                      data_type:
+                        type: string
+                        enum: [stock_dividends]
+                      cache_status:
+                        type: string
+                      last_updated:
+                        type: string
+                        format: date-time
+                  data:
+                    type: object
+        '404':
+          description: Resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/eodhd/stock/adjusted:
+    get:
+      tags: [EODHD - Stock]
+      summary: Get Adjusted Stock Data
+      parameters:
+        - name: symbol
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  meta:
+                    type: object
+                    properties:
+                      provider:
+                        type: string
+                        enum: [eodhd]
+                      mcp_ready:
+                        type: boolean
+                        default: true
+                      data_type:
+                        type: string
+                        enum: [stock_adjusted]
+                      cache_status:
+                        type: string
+                      last_updated:
+                        type: string
+                        format: date-time
+                  data:
+                    type: object
+        '404':
+          description: Resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/eodhd/stock/exchange-tickers:
+    get:
+      tags: [EODHD - Stock]
+      summary: Get Exchange Tickers
+      parameters:
+        - name: exchange
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  meta:
+                    type: object
+                    properties:
+                      provider:
+                        type: string
+                        enum: [eodhd]
+                      mcp_ready:
+                        type: boolean
+                        default: true
+                      data_type:
+                        type: string
+                        enum: [stock_exchange_tickers]
+                      cache_status:
+                        type: string
+                      last_updated:
+                        type: string
+                        format: date-time
+                  data:
+                    type: array
+                    items:
+                      type: object
+        '404':
+          description: Resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/eodhd/technical/indicators:
+    get:
+      tags: [EODHD - Technical]
+      summary: Get Technical Indicators Data
+      description: Retrieve comprehensive technical analysis indicators including RSI, MACD, Bollinger Bands, and other advanced charting tools for market analysis
+      parameters:
+        - name: symbol
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  meta:
+                    type: object
+                    properties:
+                      provider:
+                        type: string
+                        enum: [eodhd]
+                      mcp_ready:
+                        type: boolean
+                        default: true
+                      data_type:
+                        type: string
+                        enum: [technical_indicators]
+                      cache_status:
+                        type: string
+                      last_updated:
+                        type: string
+                        format: date-time
+                  data:
+                    type: object
+        '404':
+          description: Resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/eodhd/technical/screener:
+    get:
+      tags: [EODHD - Technical]
+      summary: Get Technical Screener Data
+      parameters:
+        - name: filter
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Screener filter query
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  meta:
+                    type: object
+                    properties:
+                      provider:
+                        type: string
+                        enum: [eodhd]
+                      mcp_ready:
+                        type: boolean
+                        default: true
+                      data_type:
+                        type: string
+                        enum: [technical_screener]
+                      cache_status:
+                        type: string
+                      last_updated:
+                        type: string
+                        format: date-time
+                  data:
+                    type: array
+                    items:
+                      type: object
+        '404':
+          description: Resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/eodhd/news/:
+    get:
+      tags: [EODHD - News]
+      summary: Get EODHD News
+      description: Access real-time financial news and market updates from EODHD's comprehensive news feed covering stocks, crypto, forex, and economic events
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  meta:
+                    type: object
+                    properties:
+                      provider:
+                        type: string
+                        enum: [eodhd]
+                      mcp_ready:
+                        type: boolean
+                        default: true
+                      data_type:
+                        type: string
+                        enum: [news]
+                      cache_status:
+                        type: string
+                      last_updated:
+                        type: string
+                        format: date-time
+                  data:
+                    type: array
+                    items:
+                      type: object
+        '404':
+          description: Resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/eodhd/forex/pairs:
+    get:
+      tags: [EODHD - Forex]
+      summary: List available forex pairs
+      description: Get a complete list of available foreign exchange currency pairs with real-time exchange rates and market data
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  meta:
+                    type: object
+                    properties:
+                      provider:
+                        type: string
+                        enum: [eodhd]
+                      mcp_ready:
+                        type: boolean
+                        default: true
+                      data_type:
+                        type: string
+                        enum: [forex_pairs]
+                      cache_status:
+                        type: string
+                      last_updated:
+                        type: string
+                        format: date-time
+                  data:
+                    type: array
+                    items:
+                      type: object
+        '404':
+          description: Resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/eodhd/forex/quote:
+    get:
+      tags: [EODHD - Forex]
+      summary: Get latest forex quote
+      parameters:
+        - name: pair
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Forex pair (e.g., EUR/USD)
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  meta:
+                    type: object
+                    properties:
+                      provider:
+                        type: string
+                        enum: [eodhd]
+                      mcp_ready:
+                        type: boolean
+                        default: true
+                      data_type:
+                        type: string
+                        enum: [forex_quote]
+                      cache_status:
+                        type: string
+                      last_updated:
+                        type: string
+                        format: date-time
+                  data:
+                    type: object
+        '404':
+          description: Resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/eodhd/forex/intraday:
+    get:
+      tags: [EODHD - Forex]
+      summary: Get intraday forex data
+      parameters:
+        - name: pair
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Forex pair (e.g., EUR/USD)
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  meta:
+                    type: object
+                    properties:
+                      provider:
+                        type: string
+                        enum: [eodhd]
+                      mcp_ready:
+                        type: boolean
+                        default: true
+                      data_type:
+                        type: string
+                        enum: [forex_intraday]
+                      cache_status:
+                        type: string
+                      last_updated:
+                        type: string
+                        format: date-time
+                  data:
+                    type: array
+                    items:
+                      type: object
+        '404':
+          description: Resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/eodhd/forex/endofday:
+    get:
+      tags: [EODHD - Forex]
+      summary: Get daily OHLCV forex data
+      parameters:
+        - name: pair
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Forex pair (e.g., EUR/USD)
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  meta:
+                    type: object
+                    properties:
+                      provider:
+                        type: string
+                        enum: [eodhd]
+                      mcp_ready:
+                        type: boolean
+                        default: true
+                      data_type:
+                        type: string
+                        enum: [forex_endofday]
+                      cache_status:
+                        type: string
+                      last_updated:
+                        type: string
+                        format: date-time
+                  data:
+                    type: array
+                    items:
+                      type: object
+        '404':
+          description: Resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/eodhd/forex/history:
+    get:
+      tags: [EODHD - Forex]
+      summary: Get historical forex data
+      parameters:
+        - name: pair
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Forex pair (e.g., EUR/USD)
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  meta:
+                    type: object
+                    properties:
+                      provider:
+                        type: string
+                        enum: [eodhd]
+                      mcp_ready:
+                        type: boolean
+                        default: true
+                      data_type:
+                        type: string
+                        enum: [forex_history]
+                      cache_status:
+                        type: string
+                      last_updated:
+                        type: string
+                        format: date-time
+                  data:
+                    type: array
+                    items:
+                      type: object
+        '404':
+          description: Resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/eodhd/forex/splits:
+    get:
+      tags: [EODHD - Forex]
+      summary: Get forex splits data (not supported)
+      parameters:
+        - name: pair
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Forex pair (e.g., EUR/USD)
+      responses:
+        '200':
+          description: Successful response (placeholder, not supported)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  meta:
+                    type: object
+                    properties:
+                      provider:
+                        type: string
+                        enum: [eodhd]
+                      mcp_ready:
+                        type: boolean
+                        default: true
+                      data_type:
+                        type: string
+                        enum: [forex_splits]
+                      cache_status:
+                        type: string
+                      last_updated:
+                        type: string
+                        format: date-time
+                  data:
+                    type: object
+        '404':
+          description: Resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/eodhd/forex/dividends:
+    get:
+      tags: [EODHD - Forex]
+      summary: Get forex dividends data (not supported)
+      parameters:
+        - name: pair
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Forex pair (e.g., EUR/USD)
+      responses:
+        '200':
+          description: Successful response (placeholder, not supported)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  meta:
+                    type: object
+                    properties:
+                      provider:
+                        type: string
+                        enum: [eodhd]
+                      mcp_ready:
+                        type: boolean
+                        default: true
+                      data_type:
+                        type: string
+                        enum: [forex_dividends]
+                      cache_status:
+                        type: string
+                      last_updated:
+                        type: string
+                        format: date-time
+                  data:
+                    type: object
+        '404':
+          description: Resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/eodhd/forex/adjusted:
+    get:
+      tags: [EODHD - Forex]
+      summary: Get adjusted forex data
+      parameters:
+        - name: pair
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Forex pair (e.g., EUR/USD)
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  meta:
+                    type: object
+                    properties:
+                      provider:
+                        type: string
+                        enum: [eodhd]
+                      mcp_ready:
+                        type: boolean
+                        default: true
+                      data_type:
+                        type: string
+                        enum: [forex_adjusted]
+                      cache_status:
+                        type: string
+                      last_updated:
+                        type: string
+                        format: date-time
+                  data:
+                    type: object
+        '404':
+          description: Resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/eodhd/screener/:
+    get:
+      tags: [EODHD - Screener]
+      summary: Run EODHD Screener
+      description: Execute advanced market screening with customizable filters to identify stocks, crypto, or forex instruments based on technical and fundamental criteria
+      parameters:
+        - name: filter
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Screener filter query
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  meta:
+                    type: object
+                    properties:
+                      provider:
+                        type: string
+                        enum: [eodhd]
+                      mcp_ready:
+                        type: boolean
+                        default: true
+                      data_type:
+                        type: string
+                        enum: [screener]
+                      cache_status:
+                        type: string
+                      last_updated:
+                        type: string
+                        format: date-time
+                  data:
+                    type: array
+                    items:
+                      type: object
+        '404':
+          description: Resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/eodhd/exchanges/list:
+    get:
+      tags: [EODHD - Exchanges]
+      summary: List Exchanges
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  meta:
+                    type: object
+                    properties:
+                      provider:
+                        type: string
+                        enum: [eodhd]
+                      mcp_ready:
+                        type: boolean
+                        default: true
+                      data_type:
+                        type: string
+                        enum: [exchange_list]
+                      cache_status:
+                        type: string
+                      last_updated:
+                        type: string
+                        format: date-time
+                  data:
+                    type: array
+                    items:
+                      type: object
+        '404':
+          description: Resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/eodhd/exchanges/{exchange}/tickers:
+    get:
+      tags: [EODHD - Exchanges]
+      summary: List Exchange Tickers
+      parameters:
+        - name: exchange
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  meta:
+                    type: object
+                    properties:
+                      provider:
+                        type: string
+                        enum: [eodhd]
+                      mcp_ready:
+                        type: boolean
+                        default: true
+                      data_type:
+                        type: string
+                        enum: [exchange_tickers]
+                      cache_status:
+                        type: string
+                      last_updated:
+                        type: string
+                        format: date-time
+                  data:
+                    type: array
+                    items:
+                      type: object
+        '404':
+          description: Resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/eodhd/exchanges/{exchange}/hours:
+    get:
+      tags: [EODHD - Exchanges]
+      summary: Exchange Hours
+      parameters:
+        - name: exchange
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  meta:
+                    type: object
+                    properties:
+                      provider:
+                        type: string
+                        enum: [eodhd]
+                      mcp_ready:
+                        type: boolean
+                        default: true
+                      data_type:
+                        type: string
+                        enum: [exchange_hours]
+                      cache_status:
+                        type: string
+                      last_updated:
+                        type: string
+                        format: date-time
+                  data:
+                    type: object
+        '404':
+          description: Resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/eodhd/exchanges/{exchange}/status:
+    get:
+      tags: [EODHD - Exchanges]
+      summary: Exchange Status
+      parameters:
+        - name: exchange
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  meta:
+                    type: object
+                    properties:
+                      provider:
+                        type: string
+                        enum: [eodhd]
+                      mcp_ready:
+                        type: boolean
+                        default: true
+                      data_type:
+                        type: string
+                        enum: [exchange_status]
+                      cache_status:
+                        type: string
+                      last_updated:
+                        type: string
+                        format: date-time
+                  data:
+                    type: object
+        '404':
+          description: Resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/eodhd/intraday/:
+    get:
+      tags: [EODHD - Intraday]
+      summary: Get Intraday Data
+      parameters:
+        - name: symbol
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  meta:
+                    type: object
+                    properties:
+                      provider:
+                        type: string
+                        enum: [eodhd]
+                      mcp_ready:
+                        type: boolean
+                        default: true
+                      data_type:
+                        type: string
+                        enum: [intraday]
+                      cache_status:
+                        type: string
+                      last_updated:
+                        type: string
+                        format: date-time
+                  data:
+                    type: array
+                    items:
+                      type: object
+        '404':
+          description: Resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+tags:
+  - name: EODHD - Crypto
+    description: Cryptocurrency market data from EODHD API
+  - name: EODHD - Stock
+    description: Stock market data from EODHD API
+  - name: EODHD - Technical
+    description: Technical indicators and screener data from EODHD API
+  - name: EODHD - News
+    description: Financial news from EODHD API
+  - name: EODHD - Forex
+    description: Foreign exchange market data from EODHD API
+  - name: EODHD - Screener
+    description: Market screener functionality from EODHD API
+  - name: EODHD - Exchanges
+    description: Exchange information and trading hours from EODHD API
+  - name: EODHD - Misc
+    description: Miscellaneous endpoints from EODHD API
+
+components:
+  schemas:
+    StandardResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [success, error]
+        meta:
+          $ref: '#/components/schemas/StandardMeta'
+        data:
+          oneOf:
+            - type: object
+            - type: array
+            - type: string
+    
+    StandardMeta:
+      type: object
+      properties:
+        provider:
+          type: string
+        mcp_ready:
+          type: boolean
+          default: true
+        data_type:
+          type: string
+        cache_status:
+          type: string
+        last_updated:
+          type: string
+          format: date-time
+    
+    ErrorResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [error]
+        error_code:
+          type: string
+          enum: [SYMBOL_NOT_FOUND, EXCHANGE_NOT_FOUND, FOREX_PAIR_NOT_FOUND, NO_DATA_FOUND, PROVIDER_ERROR]
+        meta:
+          $ref: '#/components/schemas/StandardMeta'
+        data:
+          type: null

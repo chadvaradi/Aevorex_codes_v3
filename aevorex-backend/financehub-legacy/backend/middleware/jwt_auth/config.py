@@ -39,7 +39,14 @@ PUBLIC_ENDPOINTS: Set[str] = {
     "/api/v1/macro/fixing/estr",
     "/api/v1/macro/fixing/euribor/",
     "/api/v1/eodhd/",
+    "/api/v1/ticker-tape/",  # Ticker tape endpoint - public
     "/api/v1/billing/lemonsqueezy",  # LemonSqueezy webhook endpoint - public
+    "/.well-known/ai-plugin.json",  # MCP manifest endpoint - public
+    "/.well-known/openapi.yaml",  # MCP OpenAPI spec endpoint - public
+    "/.well-known/health",  # MCP health check endpoint - public
+    "/api/v1/.well-known/ai-plugin.json",  # MCP manifest endpoint with API prefix - public
+    "/api/v1/.well-known/openapi.yaml",  # MCP OpenAPI spec endpoint with API prefix - public
+    "/api/v1/.well-known/health",  # MCP health check endpoint with API prefix - public
     "/metrics",
 }
 
@@ -77,6 +84,10 @@ def is_public_endpoint(path: str) -> bool:
 
     # EODHD endpoint patterns
     if path.startswith("/api/v1/eodhd/"):
+        return True
+
+    # Ticker tape endpoint patterns
+    if path.startswith("/api/v1/ticker-tape/"):
         return True
 
     # Macro endpoint patterns

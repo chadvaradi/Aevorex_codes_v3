@@ -1,0 +1,58 @@
+
+
+openapi: 3.1.0
+info:
+  title: Aevorex FinanceHub API
+  version: 0.1.0
+  description: >
+    Bloomberg-grade AI-driven financial data API with macro, fundamentals, technical analysis
+    and multi-source integration. Professional equity research experience combining trading
+    platform depth with intuitive LLM-powered conversational interface.
+    
+    **MCP-Ready Features:**
+    - Standardized response format (status, meta, data)
+    - Consistent error handling with HTTP status codes
+    - Provider metadata (eodhd, yahoo_finance, fred, ecb, mnb)
+    - Cache status and processing time tracking
+    - Symbol validation and error codes
+    
+    **Data Sources:**
+    - EODHD: Stock, Crypto, Forex, Technical Analysis
+    - Yahoo Finance: Company Fundamentals
+    - FRED: US Economic Data
+    - ECB: European Economic Data
+    - MNB: Hungarian Economic Data
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Local development server
+  - url: https://api.aevorex.com/api/v1
+    description: Production server
+
+paths:
+  /eodhd/stock/eod:
+    $ref: "../mcp/specs/openapi_eodhd.yaml#/paths/~1eodhd~1stock~1eod"
+
+  /fundamentals/overview/{symbol}:
+    $ref: "../mcp/specs/openapi_fundamentals.yaml#/paths/~1fundamentals~1overview~1{symbol}"
+
+  /macro/fed/series/{series_id}:
+    $ref: "../mcp/specs/openapi_macro.yaml#/paths/~1macro~1fed~1series~1{series_id}"
+
+  /ticker-tape/:
+    $ref: "../mcp/specs/openapi_tickertape.yaml#/paths/~1ticker-tape~1"
+
+  /search/:
+    $ref: "../mcp/specs/openapi_search.yaml#/paths/~1search~1"
+
+tags:
+  - name: EODHD
+    description: Stock, crypto, forex and technicals
+  - name: Fundamentals
+    description: Company fundamentals from Yahoo Finance
+  - name: Macro
+    description: Economic indicators from ECB, FED, MNB
+  - name: Ticker Tape
+    description: Real-time ticker tape
+  - name: Search
+    description: Symbol search

@@ -211,6 +211,16 @@ def create_app(lite: bool = False) -> FastAPI:
     metrics_router = get_metrics_router(METRICS_EXPORTER)
     app.include_router(metrics_router, tags=["Metrics"])
 
+    # --- Root Level .well-known Mount for MCP/ChatGPT Standard ---
+    from fastapi.staticfiles import StaticFiles
+    import os
+    
+    # Mount .well-known directory at root level for MCP/ChatGPT standard compliance
+    well_known_dir = os.path.join(os.path.dirname(__file__), "..", ".well-known")
+    if os.path.isdir(well_known_dir):
+        app.mount("/.well-known", StaticFiles(directory=well_known_dir), name="well-known")
+        logger.info(f"Mounted .well-known directory at root level: {well_known_dir}")
+
     # Root and Health Check are always available
     @app.get("/", include_in_schema=False)
     async def root():
@@ -258,7 +268,7 @@ def create_app(lite: bool = False) -> FastAPI:
 
         app.add_middleware(
             SessionMiddleware,
-            secret_key=settings.GOOGLE_AUTH.SECRET_KEY.get_secret_value(),
+            secret_key=settings.GOOGLE_AUTH.SECRET_KEY,
             same_site=session_same_site,
             https_only=session_https_only,
             domain=cookie_domain,
