@@ -6,9 +6,10 @@ import json
 import logging
 import asyncio
 from typing import Any, Dict, Optional, List
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 import httpx
+from backend.api.endpoints.shared.response_builder import StandardResponseBuilder, MacroProvider, CacheStatus
 
 FRED_API_KEY = os.getenv("FINBOT_API_KEYS__FRED")
 FRED_BASE_URL = "https://api.stlouisfed.org/fred"
@@ -35,42 +36,20 @@ class FedService:
     Service class to interact with the FRED API, with caching support.
     """
     
-    # Series ID fixes for common misnamed or deprecated series
-    # ONLY include mappings that point to ACTUALLY EXISTING FRED series
-    SERIES_ID_FIXES = {
-        # Currency pairs - only valid FRED IDs
-        "DEXCZUS": "DEXCZKUS",   # CZK/USD - correct ID (verified exists)
-        "DEXRUS": "DEXRUBUS",    # RUB/USD - correct ID (verified exists)
-        
-        # Commodities - only verified existing IDs
-        "NATGAS": "PNGASEUUSDM",         # Natural Gas Europe (USD/MMBtu) - verified
-        "NGASUSDM": "PNGASEUUSDM",       # Alternative natural gas ID - verified
-        "OIL": "DCOILWTICO",             # Crude Oil WTI - verified
-        "DCOILWTICO": "DCOILWTICO",      # Already correct - verified
-
-        # Sugar and Coffee - verified existing IDs
-        "SUGAR": "PSUGAISAUSDM",         # Sugar Price (International, USD/metric ton) - verified
-        "PSUGARUSDM": "PSUGAISAUSDM",    # Already correct (alias) - verified
-        "COFFEE": "PCOFFOTMUSDM",        # Coffee, Other Mild Arabicas (USD/lb) - verified
-        "PCOFFUSDM": "PCOFFOTMUSDM",     # Alias for coffee - verified
-        
-        # REMOVED: DEXHUUS, DEXTRUS, GOLD, SILVER - these point to non-existent or wrong series
+    # Current valid series mappings (no deprecated entries)
+    CURRENT_SERIES_MAP = {
+        # Currency pairs - only valid, current mappings
+        "DEXHUUS": "DEXHUNUS",   # HUF/USD - correct ID
+        "DEXCZUS": "DEXCZKUS",   # CZK/USD - correct ID
+        "DEXRUS": "DEXRUBUS",    # RUB/USD - correct ID
     }
     
-    # Series with multiple possible IDs (fallback chain)
-    # ONLY include fallbacks for SAME-TYPE series (oil->oil, not oil->currency)
+    # Minimal fallback chains (only for essential series)
     SERIES_FALLBACKS = {
-        # Commodities - same type fallbacks only
-        "NATGAS": ["PNGASEUUSDM", "MHHNGSP"],  # Natural gas -> natural gas
-        "OIL": ["DCOILWTICO", "DCOILBRENTEU"], # WTI -> Brent (both oil)
-        "SUGAR": ["PSUGAISAUSDM", "PSUGARUSDM"], # Sugar -> sugar
-        "COFFEE": ["PCOFFOTMUSDM", "PCOFFUSDM"], # Coffee -> coffee
-        
-        # Currencies - only if multiple valid IDs exist for same pair
-        "DEXCZUS": ["DEXCZKUS"],    # CZK/USD - only one valid ID
-        "DEXRUS": ["DEXRUBUS"],     # RUB/USD - only one valid ID
-        
-        # REMOVED: DEXHUUS, DEXTRUS, GOLD, SILVER - no valid fallbacks available
+        # Only essential fallbacks with verified availability
+        "DEXHUUS": ["DEXHUNUS"],    # HUF/USD
+        "DEXCZUS": ["DEXCZKUS"],    # CZK/USD
+        "DEXRUS": ["DEXRUBUS"],     # RUB/USD
     }
     
     # Availability matrix for product-level transparency
@@ -130,7 +109,7 @@ class FedService:
         Returns:
             Corrected series ID
         """
-        return self.SERIES_ID_FIXES.get(series_id, series_id)
+        return self.CURRENT_SERIES_MAP.get(series_id, series_id)
     
     def _get_series_fallbacks(self, series_id: str) -> List[str]:
         """
@@ -251,7 +230,11 @@ class FedService:
             Search results as a dict.
         """
         if not FRED_API_KEY:
-            raise ValueError("FRED API key not configured")
+            logger.error("FRED API key not configured")
+            return StandardResponseBuilder.error(
+                "FRED API key not configured",
+                meta={"provider": "fred", "cache_status": "error"}
+            )
         
         # Only use fred_client if it has the required method
         if HAS_FRED_CLIENT and hasattr(fred_client, "search_series"):
@@ -288,16 +271,30 @@ class FedService:
         try:
             cached = await self.get_cached_search(query, limit, offset)
             if cached:
-                logger.info(f"Using cached search results for: {query}")
-                return cached
+                logger.debug(f"Using cached search results for: {query}")
+                return StandardResponseBuilder.success(
+                    cached,
+                    meta={"provider": "fred", "cache_status": "cached", "mcp_ready": True}
+                )
             
-            logger.info(f"Fetching fresh search results for: {query}")
+            logger.debug(f"Fetching fresh search results for: {query}")
             data = await self.fetch_fred_search(query, limit, offset)
+            
+            # Check if fetch_fred_search returned an error response
+            if data.get("status") == "error":
+                return data
+            
             await self.set_cached_search(query, limit, offset, data)
-            return data
+            return StandardResponseBuilder.success(
+                data,
+                meta={"provider": "fred", "cache_status": "fresh", "mcp_ready": True}
+            )
         except Exception as e:
             logger.error(f"Error searching FRED series for '{query}': {e}", exc_info=True)
-            raise
+            return StandardResponseBuilder.error(
+                f"Failed to search FRED series: {str(e)}",
+                meta={"provider": "fred", "cache_status": "error", "mcp_ready": True}
+            )
 
     # ------------------- RELATED SERIES -------------------
     async def get_related_series(self, series_id: str) -> Dict[str, Any]:
@@ -312,25 +309,34 @@ class FedService:
         try:
             cached = await self.get_cached_related(series_id)
             if cached:
-                logger.info(f"Using cached related series for: {series_id}")
-                return cached
+                logger.debug(f"Using cached related series for: {series_id}")
+                return StandardResponseBuilder.success(
+                    cached,
+                    meta={"provider": "fred", "cache_status": "cached", "mcp_ready": True}
+                )
             
-            logger.info(f"Fetching fresh related series for: {series_id}")
+            logger.debug(f"Fetching fresh related series for: {series_id}")
             
             # Only use fred_client if it has the required method
             if HAS_FRED_CLIENT and hasattr(fred_client, "get_related_series"):
-                logger.info(f"Using fred_client for related series: {series_id}")
+                logger.debug(f"Using fred_client for related series: {series_id}")
                 data = await fred_client.get_related_series(series_id)
             else:
                 # Fallback to direct HTTPX call
-                logger.info(f"Falling back to HTTPX for {series_id} because fred_client does not implement get_related_series")
+                logger.debug(f"Falling back to HTTPX for {series_id} because fred_client does not implement get_related_series")
                 data = await self._fetch_fred_related(series_id)
             
             await self.set_cached_related(series_id, data)
-            return data
+            return StandardResponseBuilder.success(
+                data,
+                meta={"provider": "fred", "cache_status": "fresh", "mcp_ready": True}
+            )
         except Exception as e:
             logger.error(f"Error getting related FRED series for '{series_id}': {e}", exc_info=True)
-            raise
+            return StandardResponseBuilder.error(
+                f"Failed to get related series: {str(e)}",
+                meta={"provider": "fred", "cache_status": "error", "mcp_ready": True}
+            )
 
     # ------------------- METADATA -------------------
     async def get_cached_metadata(self, series_id: str) -> Optional[Dict[str, Any]]:
@@ -369,7 +375,11 @@ class FedService:
             Metadata dict.
         """
         if not FRED_API_KEY:
-            raise ValueError("FRED API key not configured")
+            logger.error("FRED API key not configured")
+            return StandardResponseBuilder.error(
+                "FRED API key not configured",
+                meta={"provider": "fred", "cache_status": "error"}
+            )
         
         # Only use fred_client if it has the required method
         if HAS_FRED_CLIENT and hasattr(fred_client, "get_series_metadata"):
@@ -545,16 +555,30 @@ class FedService:
         try:
             cached = await self.get_cached_metadata(series_id)
             if cached:
-                logger.info(f"Using cached metadata for {series_id}")
-                return cached
+                logger.debug(f"Using cached metadata for {series_id}")
+                return StandardResponseBuilder.success(
+                    cached,
+                    meta={"provider": "fred", "cache_status": "cached", "mcp_ready": True}
+                )
             
-            logger.info(f"Fetching fresh metadata for {series_id}")
+            logger.debug(f"Fetching fresh metadata for {series_id}")
             data = await self.fetch_fred_metadata(series_id)
+            
+            # Check if fetch_fred_metadata returned an error response
+            if data.get("status") == "error":
+                return data
+            
             await self.set_cached_metadata(series_id, data)
-            return data
+            return StandardResponseBuilder.success(
+                data,
+                meta={"provider": "fred", "cache_status": "fresh", "mcp_ready": True}
+            )
         except Exception as e:
             logger.error(f"Service internal error getting series metadata for {series_id}: {e}", exc_info=True)
-            raise
+            return StandardResponseBuilder.error(
+                f"Failed to get series metadata: {str(e)}",
+                meta={"provider": "fred", "cache_status": "error", "mcp_ready": True}
+            )
 
     # ------------------- SERIES OBSERVATIONS -------------------
     async def get_series_observations(
@@ -564,6 +588,7 @@ class FedService:
         end_date: Optional[str] = None,
         frequency: Optional[str] = None,
         units: Optional[str] = None,
+        limit: Optional[int] = None,
         force_refresh: bool = False,
     ) -> Dict[str, Any]:
         """
@@ -575,6 +600,7 @@ class FedService:
             end_date: End date in YYYY-MM-DD format.
             frequency: Data frequency (e.g., 'm', 'q', 'a').
             units: Data units (e.g., 'lin', 'chg').
+            limit: Maximum number of observations to return.
             force_refresh: If True, bypass the cache.
         Returns:
             Series observations dict.
@@ -582,11 +608,10 @@ class FedService:
         # Check availability status first
         availability = self._get_availability_status(series_id)
         if availability["status"] == "not_available":
-            return {
-                "status": "error",
-                "message": availability["message"],
-                "data": None
-            }
+            return StandardResponseBuilder.error(
+                availability["message"],
+                meta={"provider": "fred", "cache_status": "error", "mcp_ready": True}
+            )
         
         # Fix series ID if needed
         fixed_series_id = self._fix_series_id(series_id)
@@ -611,9 +636,10 @@ class FedService:
         for attempt_id in fallback_ids:
             try:
                 # Create cache key for this attempt
-                attempt_cache_key = f"fed:observations:{attempt_id}:{start_date}:{end_date}:{frequency}:{units}"
+                attempt_cache_key = f"fed:observations:{attempt_id}:{start_date}:{end_date}:{frequency}:{units}:{limit}"
+                # The _fetch_observations_for_series method now returns MCP-ready response
                 return await self._fetch_observations_for_series(
-                    attempt_id, start_date, end_date, frequency, units, force_refresh, attempt_cache_key
+                    attempt_id, start_date, end_date, frequency, units, limit, force_refresh, attempt_cache_key
                 )
             except ValueError as e:
                 last_error = e
@@ -624,11 +650,19 @@ class FedService:
                 logger.error(f"Unexpected error for series {attempt_id}: {e}")
                 continue
         
-        # If all fallbacks failed, raise the last error
+        # If all fallbacks failed, return error response
         if last_error:
-            raise last_error
+            logger.error(f"All fallback attempts failed for series {series_id}: {last_error}")
+            return StandardResponseBuilder.error(
+                f"No data available for series {series_id}: {str(last_error)}",
+                meta={"provider": "fred", "cache_status": "error", "mcp_ready": True}
+            )
         else:
-            raise ValueError(f"No data available for series {series_id} or any fallbacks")
+            logger.error(f"No data available for series {series_id} or any fallbacks")
+            return StandardResponseBuilder.error(
+                f"No data available for series {series_id} or any fallbacks",
+                meta={"provider": "fred", "cache_status": "error", "mcp_ready": True}
+            )
     
     async def _fetch_observations_for_series(
         self,
@@ -637,6 +671,7 @@ class FedService:
         end_date: Optional[str] = None,
         frequency: Optional[str] = None,
         units: Optional[str] = None,
+        limit: Optional[int] = None,
         force_refresh: bool = False,
         cache_key: str = None
     ) -> Dict[str, Any]:
@@ -644,19 +679,23 @@ class FedService:
         Fetch observations for a specific series ID (helper method for fallback logic).
         """
         if not cache_key:
-            cache_key = f"fed:observations:{series_id}:{start_date}:{end_date}:{frequency}:{units}"
+            cache_key = f"fed:observations:{series_id}:{start_date}:{end_date}:{frequency}:{units}:{limit}"
         if not force_refresh:
             cached = await self.cache.get(cache_key)
             if cached:
                 return json.loads(cached)
         if not FRED_API_KEY:
-            raise ValueError("FRED API key not configured")
+            logger.error("FRED API key not configured")
+            return StandardResponseBuilder.error(
+                "FRED API key not configured",
+                meta={"provider": "fred", "cache_status": "error"}
+            )
         
         # Only use fred_client if it has the required method
         if HAS_FRED_CLIENT and hasattr(fred_client, "get_series_observations"):
             logger.info(f"Using fred_client for observations: {series_id}")
             data = await fred_client.get_series_observations(
-                series_id, start_date, end_date, frequency, units
+                series_id, start_date, end_date, frequency, units, limit
             )
         else:
             # Fallback to direct HTTPX call
@@ -673,6 +712,8 @@ class FedService:
                 params["frequency"] = frequency
             if units:
                 params["units"] = units
+            if limit:
+                params["limit"] = limit
             
             logger.info(f"Fetching FRED observations for: {series_id} (via HTTPX)")
             async with httpx.AsyncClient(timeout=30.0) as client:
@@ -755,7 +796,22 @@ class FedService:
             data["status"] = "success"
         
         await self.cache.set(cache_key, json.dumps(data), ttl=CACHE_EXPIRE_SECONDS)
-        return data
+        
+        # Return MCP-ready response
+        if data.get("status") == "success":
+            return StandardResponseBuilder.create_macro_success_response(
+                provider=MacroProvider.FRED,
+                data=data,
+                series_id=series_id,
+                cache_status=CacheStatus.FRESH if not force_refresh else CacheStatus.FRESH
+            )
+        else:
+            return StandardResponseBuilder.create_macro_error_response(
+                provider=MacroProvider.FRED,
+                message=data.get("message", "Unknown error"),
+                error_code="FRED_API_ERROR",
+                series_id=series_id
+            )
 
     # ------------------- UTILITY FUNCTIONS -------------------
     def _normalize_fred_value(self, value: str) -> float | None:
@@ -884,9 +940,16 @@ class FedService:
         cache_key = f"fed:categories:{category_id}"
         cached = await self.cache.get(cache_key)
         if cached:
-            return json.loads(cached)
+            return StandardResponseBuilder.success(
+                json.loads(cached),
+                meta={"provider": "fred", "cache_status": "cached", "mcp_ready": True}
+            )
         if not FRED_API_KEY:
-            raise ValueError("FRED API key not configured")
+            logger.error("FRED API key not configured")
+            return StandardResponseBuilder.error(
+                "FRED API key not configured",
+                meta={"provider": "fred", "cache_status": "error", "mcp_ready": True}
+            )
         
         # Only use fred_client if it has the required method
         if HAS_FRED_CLIENT and hasattr(fred_client, "get_categories"):
@@ -951,4 +1014,7 @@ class FedService:
                     
                     data["categories"] = enhanced_categories
         await self.cache.set(cache_key, json.dumps(data), ttl=CACHE_EXPIRE_SECONDS)
-        return data
+        return StandardResponseBuilder.success(
+            data,
+            meta={"provider": "fred", "cache_status": "fresh", "mcp_ready": True}
+        )

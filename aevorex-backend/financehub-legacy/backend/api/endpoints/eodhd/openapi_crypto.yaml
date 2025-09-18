@@ -1,0 +1,974 @@
+openapi: 3.1.0
+info:
+  title: Aevorex FinanceHub EODHD Crypto API
+  description: |
+    Professional cryptocurrency data API powered by EODHD (End of Day Historical Data).
+    This API provides comprehensive cryptocurrency market data including real-time quotes,
+    historical data, intraday data, and market information.
+    
+    **Data Source:**
+    - EODHD (End of Day Historical Data) - Professional financial data provider
+    
+    **Key Features:**
+    - Real-time cryptocurrency quotes
+    - Historical End-of-Day (EOD) data
+    - Intraday data with multiple timeframes
+    - Comprehensive cryptocurrency listing
+    - Professional-grade data quality
+    
+    **Supported Cryptocurrencies:**
+    - Major cryptocurrencies (BTC, ETH, ADA, SOL, DOGE, etc.)
+    - 1000+ cryptocurrency pairs
+    - USD-denominated pricing
+    
+    **Data Quality:**
+    - Real-time and delayed data
+    - OHLCV (Open, High, Low, Close, Volume) data
+    - Timestamp and datetime formats
+    - Professional financial data standards
+  version: 1.0.0
+  contact:
+    name: Aevorex FinanceHub
+    url: https://aevorex.com
+  license:
+    name: Proprietary
+    url: https://aevorex.com/license
+
+servers:
+  - url: http://localhost:8084/api/v1/eodhd/crypto
+    description: Development server
+  - url: https://api.aevorex.com/api/v1/eodhd/crypto
+    description: Production server
+
+tags:
+  - name: Cryptocurrency Data
+    description: Real-time and historical cryptocurrency market data
+  - name: Market Information
+    description: Cryptocurrency market listings and metadata
+
+components:
+  schemas:
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+          example: "Failed to fetch crypto data"
+    
+    CryptoTicker:
+      type: object
+      required: [code, name, exchange, currency, type]
+      properties:
+        code:
+          type: string
+          example: "BTC-USD"
+          description: Cryptocurrency symbol code
+        name:
+          type: string
+          example: "Bitcoin"
+          description: Cryptocurrency name
+        country:
+          type: string
+          example: "Unknown"
+          description: Country of origin (typically "Unknown" for crypto)
+        exchange:
+          type: string
+          example: "CC"
+          description: Exchange code (CC for cryptocurrency)
+        currency:
+          type: string
+          example: "USD"
+          description: Base currency
+        type:
+          type: string
+          example: "Currency"
+          description: Asset type
+        isin:
+          type: string
+          nullable: true
+          example: null
+          description: ISIN code (null for cryptocurrencies)
+    
+    CryptoQuote:
+      type: object
+      required: [code, timestamp, open, high, low, close, volume, previousClose, change, change_p]
+      properties:
+        code:
+          type: string
+          example: "BTC-USD.CC"
+          description: Cryptocurrency symbol with exchange suffix
+        timestamp:
+          type: integer
+          example: 1758017340
+          description: Unix timestamp
+        gmtoffset:
+          type: integer
+          example: 0
+          description: GMT offset
+        open:
+          type: number
+          example: 115409.3046875
+          description: Opening price
+        high:
+          type: number
+          example: 116031.78125
+          description: Highest price
+        low:
+          type: number
+          example: 115017.875
+          description: Lowest price
+        close:
+          type: number
+          example: 115451.78125
+          description: Closing price
+        volume:
+          type: number
+          example: 44868939776
+          description: Trading volume
+        previousClose:
+          type: number
+          example: 115444.87270834
+          description: Previous day's closing price
+        change:
+          type: number
+          example: 6.9085
+          description: Price change
+        change_p:
+          type: number
+          example: 0.006
+          description: Price change percentage
+    
+    CryptoEODData:
+      type: object
+      required: [date, open, high, low, close, adjusted_close, volume]
+      properties:
+        date:
+          type: string
+          format: date
+          example: "2025-09-15"
+          description: Trading date
+        open:
+          type: number
+          example: 115399.6311438108
+          description: Opening price
+        high:
+          type: number
+          example: 116747.87923585
+          description: Highest price
+        low:
+          type: number
+          example: 114461.0631650978
+          description: Lowest price
+        close:
+          type: number
+          example: 115444.8727083374
+          description: Closing price
+        adjusted_close:
+          type: number
+          example: 115444.8727083374
+          description: Adjusted closing price (same as close for crypto)
+        volume:
+          type: number
+          example: 52937859416
+          description: Trading volume
+    
+    CryptoIntradayData:
+      type: object
+      required: [timestamp, gmtoffset, datetime, open, high, low, close, volume]
+      properties:
+        timestamp:
+          type: integer
+          example: 1757963100
+          description: Unix timestamp
+        gmtoffset:
+          type: integer
+          example: 0
+          description: GMT offset
+        datetime:
+          type: string
+          example: "2025-09-15 19:05:00"
+          description: Human-readable datetime
+        open:
+          type: number
+          example: 115404.453125
+          description: Opening price
+        high:
+          type: number
+          example: 115529.664062
+          description: Highest price
+        low:
+          type: number
+          example: 115404.453125
+          description: Lowest price
+        close:
+          type: number
+          example: 115460.09375
+          description: Closing price
+        volume:
+          type: number
+          nullable: true
+          example: null
+          description: Trading volume (may be null for some intervals)
+    
+    CryptoMetadata:
+      type: object
+      required: [symbol, note, date_range]
+      properties:
+        symbol:
+          type: string
+          example: "BTC-USD"
+          description: Cryptocurrency symbol
+        note:
+          type: string
+          example: "Showing last 30 days by default. Use ?from=YYYY-MM-DD&to=YYYY-MM-DD for custom range."
+          description: Helpful note about default behavior
+        date_range:
+          type: string
+          example: "2025-08-17 to 2025-09-16"
+          description: Date range of returned data
+
+paths:
+  /list:
+    get:
+      tags: [Market Information]
+      operationId: listCryptocurrencies
+      summary: List All Supported Cryptocurrencies
+      description: |
+        **Capabilities**
+        - Complete list of all supported cryptocurrencies
+        - 1000+ cryptocurrency pairs
+        - USD-denominated pricing
+        - Comprehensive metadata (name, exchange, currency, type)
+        
+        **Not supported / limitations**
+        - No filtering or search parameters
+        - No pagination support
+        - No sorting options
+        
+        **Known issues**
+        - None currently identified
+        
+        **Roadmap**
+        - Search functionality (?search=)
+        - Pagination support (?page=, ?limit=)
+        - Filtering by market cap, volume, etc.
+        - Sorting options (?sort_by=, ?order=)
+      x-capabilities:
+        real_time: false
+        historical: false
+        filtering: false
+        pagination: false
+        sorting: false
+        search: false
+        limit_param: false
+        date_range: false
+        response_envelope: "direct-array"
+      x-limitations:
+        - "No filtering or search parameters"
+        - "No pagination support"
+        - "No sorting options"
+      x-roadmap:
+        - "Search functionality (?search=)"
+        - "Pagination support (?page=, ?limit=)"
+        - "Filtering by market cap, volume, etc."
+        - "Sorting options (?sort_by=, ?order=)"
+      x-source: "eodhd"
+      parameters:
+        - in: query
+          name: api_token
+          schema:
+            type: string
+          description: EODHD API token (optional, uses default if not provided)
+          example: "your_eodhd_api_token"
+      responses:
+        '200':
+          description: List of supported cryptocurrencies
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CryptoTicker'
+              example:
+                - code: "BTC-USD"
+                  name: "Bitcoin"
+                  country: "Unknown"
+                  exchange: "CC"
+                  currency: "USD"
+                  type: "Currency"
+                  isin: null
+                - code: "ETH-USD"
+                  name: "Ethereum"
+                  country: "Unknown"
+                  exchange: "CC"
+                  currency: "USD"
+                  type: "Currency"
+                  isin: null
+                - code: "ADA-USD"
+                  name: "Cardano"
+                  country: "Unknown"
+                  exchange: "CC"
+                  currency: "USD"
+                  type: "Currency"
+                  isin: null
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Failed to fetch crypto list"
+
+  /{symbol}/quote:
+    get:
+      tags: [Cryptocurrency Data]
+      operationId: getCryptoQuote
+      summary: Get Real-Time Cryptocurrency Quote
+      description: |
+        **Capabilities**
+        - Real-time or delayed cryptocurrency quotes
+        - Complete OHLCV data (Open, High, Low, Close, Volume)
+        - Price change and percentage change
+        - Previous close comparison
+        - Timestamp and GMT offset information
+        
+        **Not supported / limitations**
+        - No historical quote data
+        - No multiple symbol support
+        - No custom timeframes
+        
+        **Known issues**
+        - None currently identified
+        
+        **Roadmap**
+        - Historical quote data (?date=)
+        - Multiple symbol support (?symbols=)
+        - Custom timeframes
+        - Extended metadata
+      x-capabilities:
+        real_time: true
+        historical: false
+        filtering: false
+        pagination: false
+        sorting: false
+        search: false
+        limit_param: false
+        date_range: false
+        response_envelope: "direct-object"
+      x-limitations:
+        - "No historical quote data"
+        - "No multiple symbol support"
+        - "No custom timeframes"
+      x-roadmap:
+        - "Historical quote data (?date=)"
+        - "Multiple symbol support (?symbols=)"
+        - "Custom timeframes"
+        - "Extended metadata"
+      x-source: "eodhd"
+      parameters:
+        - in: path
+          name: symbol
+          required: true
+          schema:
+            type: string
+          example: "BTC-USD"
+          description: Cryptocurrency symbol (e.g., BTC-USD, ETH-USD, ADA-USD)
+        - in: query
+          name: api_token
+          schema:
+            type: string
+          description: EODHD API token (optional, uses default if not provided)
+          example: "your_eodhd_api_token"
+      responses:
+        '200':
+          description: Real-time cryptocurrency quote
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CryptoQuote'
+              example:
+                code: "BTC-USD.CC"
+                timestamp: 1758017340
+                gmtoffset: 0
+                open: 115409.3046875
+                high: 116031.78125
+                low: 115017.875
+                close: 115451.78125
+                volume: 44868939776
+                previousClose: 115444.87270834
+                change: 6.9085
+                change_p: 0.006
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Failed to fetch crypto quote"
+
+  /{symbol}/eod:
+    get:
+      tags: [Cryptocurrency Data]
+      operationId: getCryptoEOD
+      summary: Get End-of-Day Historical Data
+      description: |
+        **Capabilities**
+        - Historical End-of-Day (EOD) data
+        - Default 30-day range if no dates specified
+        - Custom date range support
+        - Complete OHLCV data with adjusted close
+        - Metadata with date range information
+        
+        **Not supported / limitations**
+        - No limit parameter for result count
+        - No frequency transformation
+        - No data aggregation options
+        
+        **Known issues**
+        - None currently identified
+        
+        **Roadmap**
+        - Limit parameter (?limit=)
+        - Frequency transformation (?frequency=)
+        - Data aggregation options
+        - Extended metadata
+      x-capabilities:
+        real_time: false
+        historical: true
+        filtering: true
+        pagination: false
+        sorting: false
+        search: false
+        limit_param: false
+        date_range: true
+        response_envelope: "metadata-wrapper"
+      x-limitations:
+        - "No limit parameter for result count"
+        - "No frequency transformation"
+        - "No data aggregation options"
+      x-roadmap:
+        - "Limit parameter (?limit=)"
+        - "Frequency transformation (?frequency=)"
+        - "Data aggregation options"
+        - "Extended metadata"
+      x-source: "eodhd"
+      parameters:
+        - in: path
+          name: symbol
+          required: true
+          schema:
+            type: string
+          example: "BTC-USD"
+          description: Cryptocurrency symbol (e.g., BTC-USD, ETH-USD, ADA-USD)
+        - in: query
+          name: from_date
+          schema:
+            type: string
+            format: date
+          example: "2025-08-01"
+          description: Start date (YYYY-MM-DD format). Defaults to 30 days ago if not specified.
+        - in: query
+          name: to_date
+          schema:
+            type: string
+            format: date
+          example: "2025-09-15"
+          description: End date (YYYY-MM-DD format). Defaults to today if not specified.
+        - in: query
+          name: api_token
+          schema:
+            type: string
+          description: EODHD API token (optional, uses default if not provided)
+          example: "your_eodhd_api_token"
+      responses:
+        '200':
+          description: End-of-Day historical data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CryptoEODData'
+                  metadata:
+                    $ref: '#/components/schemas/CryptoMetadata'
+              example:
+                data:
+                  - date: "2025-09-15"
+                    open: 115399.6311438108
+                    high: 116747.87923585
+                    low: 114461.0631650978
+                    close: 115444.8727083374
+                    adjusted_close: 115444.8727083374
+                    volume: 52937859416
+                  - date: "2025-09-14"
+                    open: 115950.292319112
+                    high: 116181.4992231369
+                    low: 115222.3963213323
+                    close: 115407.6544474289
+                    adjusted_close: 115407.6544474289
+                    volume: 32798036057
+                metadata:
+                  symbol: "BTC-USD"
+                  note: "Showing last 30 days by default. Use ?from=YYYY-MM-DD&to=YYYY-MM-DD for custom range."
+                  date_range: "2025-08-17 to 2025-09-16"
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Failed to fetch crypto EOD data"
+
+  /{symbol}/intraday:
+    get:
+      tags: [Cryptocurrency Data]
+      operationId: getCryptoIntraday
+      summary: Get Intraday Data
+      description: |
+        **Capabilities**
+        - Intraday data with multiple timeframes
+        - Real-time and historical intraday data
+        - Complete OHLCV data with timestamps
+        - Human-readable datetime format
+        - GMT offset information
+        
+        **Not supported / limitations**
+        - No date range filtering
+        - No limit parameter for result count
+        - No custom timeframes beyond predefined intervals
+        
+        **Known issues**
+        - None currently identified
+        
+        **Roadmap**
+        - Date range filtering (?from=, ?to=)
+        - Limit parameter (?limit=)
+        - Custom timeframes
+        - Extended metadata
+      x-capabilities:
+        real_time: true
+        historical: true
+        filtering: false
+        pagination: false
+        sorting: false
+        search: false
+        limit_param: false
+        date_range: false
+        response_envelope: "direct-array"
+      x-limitations:
+        - "No date range filtering"
+        - "No limit parameter for result count"
+        - "No custom timeframes beyond predefined intervals"
+      x-roadmap:
+        - "Date range filtering (?from=, ?to=)"
+        - "Limit parameter (?limit=)"
+        - "Custom timeframes"
+        - "Extended metadata"
+      x-source: "eodhd"
+      parameters:
+        - in: path
+          name: symbol
+          required: true
+          schema:
+            type: string
+          example: "BTC-USD"
+          description: Cryptocurrency symbol (e.g., BTC-USD, ETH-USD, ADA-USD)
+        - in: query
+          name: interval
+          schema:
+            type: string
+            enum: ["1m", "5m", "1h", "1d"]
+            default: "5m"
+          example: "5m"
+          description: Intraday interval (1m, 5m, 1h, 1d)
+        - in: query
+          name: api_token
+          schema:
+            type: string
+          description: EODHD API token (optional, uses default if not provided)
+          example: "your_eodhd_api_token"
+      responses:
+        '200':
+          description: Intraday data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CryptoIntradayData'
+              example:
+                - timestamp: 1757963100
+                  gmtoffset: 0
+                  datetime: "2025-09-15 19:05:00"
+                  open: 115404.453125
+                  high: 115529.664062
+                  low: 115404.453125
+                  close: 115460.09375
+                  volume: null
+                - timestamp: 1757963400
+                  gmtoffset: 0
+                  datetime: "2025-09-15 19:10:00"
+                  open: 115423.515625
+                  high: 115423.515625
+                  low: 115238.273437
+                  close: 115238.273437
+                  volume: 141824000
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Failed to fetch crypto intraday data"
+
+  /{symbol}/history:
+    get:
+      tags: [Cryptocurrency Data]
+      operationId: getCryptoHistory
+      summary: Get Historical Data (Alias for EOD)
+      description: |
+        **Capabilities**
+        - Historical data (same as EOD endpoint)
+        - Default 30-day range if no dates specified
+        - Custom date range support
+        - Complete OHLCV data with adjusted close
+        - Metadata with date range information
+        
+        **Not supported / limitations**
+        - No limit parameter for result count
+        - No frequency transformation
+        - No data aggregation options
+        - Duplicates EOD endpoint functionality
+        
+        **Known issues**
+        - None currently identified
+        
+        **Roadmap**
+        - Limit parameter (?limit=)
+        - Frequency transformation (?frequency=)
+        - Data aggregation options
+        - Extended metadata
+        - Consider deprecating in favor of EOD endpoint
+      x-capabilities:
+        real_time: false
+        historical: true
+        filtering: true
+        pagination: false
+        sorting: false
+        search: false
+        limit_param: false
+        date_range: true
+        response_envelope: "metadata-wrapper"
+      x-limitations:
+        - "No limit parameter for result count"
+        - "No frequency transformation"
+        - "No data aggregation options"
+        - "Duplicates EOD endpoint functionality"
+      x-roadmap:
+        - "Limit parameter (?limit=)"
+        - "Frequency transformation (?frequency=)"
+        - "Data aggregation options"
+        - "Extended metadata"
+        - "Consider deprecating in favor of EOD endpoint"
+      x-source: "eodhd"
+      parameters:
+        - in: path
+          name: symbol
+          required: true
+          schema:
+            type: string
+          example: "BTC-USD"
+          description: Cryptocurrency symbol (e.g., BTC-USD, ETH-USD, ADA-USD)
+        - in: query
+          name: from_date
+          schema:
+            type: string
+            format: date
+          example: "2025-08-01"
+          description: Start date (YYYY-MM-DD format). Defaults to 30 days ago if not specified.
+        - in: query
+          name: to_date
+          schema:
+            type: string
+            format: date
+          example: "2025-09-15"
+          description: End date (YYYY-MM-DD format). Defaults to today if not specified.
+        - in: query
+          name: api_token
+          schema:
+            type: string
+          description: EODHD API token (optional, uses default if not provided)
+          example: "your_eodhd_api_token"
+      responses:
+        '200':
+          description: Historical data (same as EOD endpoint)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CryptoEODData'
+                  metadata:
+                    $ref: '#/components/schemas/CryptoMetadata'
+              example:
+                data:
+                  - date: "2025-09-15"
+                    open: 115399.6311438108
+                    high: 116747.87923585
+                    low: 114461.0631650978
+                    close: 115444.8727083374
+                    adjusted_close: 115444.8727083374
+                    volume: 52937859416
+                metadata:
+                  symbol: "BTC-USD"
+                  note: "Showing last 30 days by default. Use ?from=YYYY-MM-DD&to=YYYY-MM-DD for custom range."
+                  date_range: "2025-08-17 to 2025-09-16"
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Failed to fetch crypto history data"
+
+  /{symbol}/splits:
+    get:
+      tags: [Cryptocurrency Data]
+      operationId: getCryptoSplits
+      summary: Get Cryptocurrency Splits (Not Supported)
+      description: |
+        **Capabilities**
+        - None - splits are not applicable to cryptocurrencies
+        
+        **Not supported / limitations**
+        - Splits data is not supported for cryptocurrencies
+        - Cryptocurrencies do not have stock splits
+        - Returns error message explaining limitation
+        
+        **Known issues**
+        - None currently identified
+        
+        **Roadmap**
+        - Consider removing this endpoint
+        - Add redirect to appropriate crypto-specific endpoint
+        - Update documentation to clarify crypto vs stock differences
+      x-capabilities:
+        real_time: false
+        historical: false
+        filtering: false
+        pagination: false
+        sorting: false
+        search: false
+        limit_param: false
+        date_range: false
+        response_envelope: "error-only"
+      x-limitations:
+        - "Splits data is not supported for cryptocurrencies"
+        - "Cryptocurrencies do not have stock splits"
+        - "Returns error message explaining limitation"
+      x-roadmap:
+        - "Consider removing this endpoint"
+        - "Add redirect to appropriate crypto-specific endpoint"
+        - "Update documentation to clarify crypto vs stock differences"
+      x-source: "eodhd"
+      parameters:
+        - in: path
+          name: symbol
+          required: true
+          schema:
+            type: string
+          example: "BTC-USD"
+          description: Cryptocurrency symbol (e.g., BTC-USD, ETH-USD, ADA-USD)
+      responses:
+        '400':
+          description: Splits not supported for cryptocurrencies
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Splits data not supported for cryptocurrencies"
+
+  /{symbol}/dividends:
+    get:
+      tags: [Cryptocurrency Data]
+      operationId: getCryptoDividends
+      summary: Get Cryptocurrency Dividends (Not Supported)
+      description: |
+        **Capabilities**
+        - None - dividends are not applicable to cryptocurrencies
+        
+        **Not supported / limitations**
+        - Dividends data is not supported for cryptocurrencies
+        - Cryptocurrencies do not pay dividends
+        - Returns error message explaining limitation
+        
+        **Known issues**
+        - None currently identified
+        
+        **Roadmap**
+        - Consider removing this endpoint
+        - Add redirect to appropriate crypto-specific endpoint
+        - Update documentation to clarify crypto vs stock differences
+      x-capabilities:
+        real_time: false
+        historical: false
+        filtering: false
+        pagination: false
+        sorting: false
+        search: false
+        limit_param: false
+        date_range: false
+        response_envelope: "error-only"
+      x-limitations:
+        - "Dividends data is not supported for cryptocurrencies"
+        - "Cryptocurrencies do not pay dividends"
+        - "Returns error message explaining limitation"
+      x-roadmap:
+        - "Consider removing this endpoint"
+        - "Add redirect to appropriate crypto-specific endpoint"
+        - "Update documentation to clarify crypto vs stock differences"
+      x-source: "eodhd"
+      parameters:
+        - in: path
+          name: symbol
+          required: true
+          schema:
+            type: string
+          example: "BTC-USD"
+          description: Cryptocurrency symbol (e.g., BTC-USD, ETH-USD, ADA-USD)
+      responses:
+        '400':
+          description: Dividends not supported for cryptocurrencies
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Dividends data not supported for cryptocurrencies"
+
+  /{symbol}/adjusted:
+    get:
+      tags: [Cryptocurrency Data]
+      operationId: getCryptoAdjusted
+      summary: Get Adjusted Price Data (Same as EOD)
+      description: |
+        **Capabilities**
+        - Adjusted price data (same as EOD endpoint)
+        - Default 30-day range if no dates specified
+        - Custom date range support
+        - Complete OHLCV data with adjusted close
+        - Metadata with date range information
+        
+        **Not supported / limitations**
+        - No limit parameter for result count
+        - No frequency transformation
+        - No data aggregation options
+        - Duplicates EOD endpoint functionality
+        
+        **Known issues**
+        - None currently identified
+        
+        **Roadmap**
+        - Limit parameter (?limit=)
+        - Frequency transformation (?frequency=)
+        - Data aggregation options
+        - Extended metadata
+        - Consider deprecating in favor of EOD endpoint
+      x-capabilities:
+        real_time: false
+        historical: true
+        filtering: true
+        pagination: false
+        sorting: false
+        search: false
+        limit_param: false
+        date_range: true
+        response_envelope: "metadata-wrapper"
+      x-limitations:
+        - "No limit parameter for result count"
+        - "No frequency transformation"
+        - "No data aggregation options"
+        - "Duplicates EOD endpoint functionality"
+      x-roadmap:
+        - "Limit parameter (?limit=)"
+        - "Frequency transformation (?frequency=)"
+        - "Data aggregation options"
+        - "Extended metadata"
+        - "Consider deprecating in favor of EOD endpoint"
+      x-source: "eodhd"
+      parameters:
+        - in: path
+          name: symbol
+          required: true
+          schema:
+            type: string
+          example: "BTC-USD"
+          description: Cryptocurrency symbol (e.g., BTC-USD, ETH-USD, ADA-USD)
+        - in: query
+          name: from_date
+          schema:
+            type: string
+            format: date
+          example: "2025-08-01"
+          description: Start date (YYYY-MM-DD format). Defaults to 30 days ago if not specified.
+        - in: query
+          name: to_date
+          schema:
+            type: string
+            format: date
+          example: "2025-09-15"
+          description: End date (YYYY-MM-DD format). Defaults to today if not specified.
+        - in: query
+          name: api_token
+          schema:
+            type: string
+          description: EODHD API token (optional, uses default if not provided)
+          example: "your_eodhd_api_token"
+      responses:
+        '200':
+          description: Adjusted price data (same as EOD endpoint)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CryptoEODData'
+                  metadata:
+                    $ref: '#/components/schemas/CryptoMetadata'
+              example:
+                data:
+                  - date: "2025-09-15"
+                    open: 115399.6311438108
+                    high: 116747.87923585
+                    low: 114461.0631650978
+                    close: 115444.8727083374
+                    adjusted_close: 115444.8727083374
+                    volume: 52937859416
+                metadata:
+                  symbol: "BTC-USD"
+                  note: "Showing last 30 days by default. Use ?from=YYYY-MM-DD&to=YYYY-MM-DD for custom range."
+                  date_range: "2025-08-17 to 2025-09-16"
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Failed to fetch crypto adjusted data"

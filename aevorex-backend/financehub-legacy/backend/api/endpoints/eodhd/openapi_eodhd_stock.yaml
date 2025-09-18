@@ -1,0 +1,940 @@
+openapi: 3.1.0
+info:
+  title: Aevorex FinanceHub EODHD Stock API
+  description: |
+    Professional stock market data API powered by EODHD (End of Day Historical Data).
+    This API provides comprehensive stock market data including real-time quotes,
+    historical data, intraday data, corporate actions, and market information.
+    
+    **Data Source:**
+    - EODHD (End of Day Historical Data) - Professional financial data provider
+    
+    **Key Features:**
+    - End-of-Day (EOD) historical data
+    - Intraday data with multiple timeframes
+    - Corporate actions (splits, dividends)
+    - Exchange ticker listings
+    - Adjusted price data
+    - Professional-grade data quality
+    
+    **Supported Markets:**
+    - US markets (NYSE, NASDAQ, NYSE ARCA, OTC, PINK)
+    - International markets
+    - ETFs, Funds, Common Stock, Preferred Stock
+    
+    **Data Quality:**
+    - Professional-grade financial data
+    - Real-time and historical coverage
+    - Corporate actions included
+    - Multiple data formats supported
+  version: 1.0.0
+  contact:
+    name: Aevorex FinanceHub
+    url: https://aevorex.com
+  license:
+    name: Proprietary
+    url: https://aevorex.com/license
+
+servers:
+  - url: http://localhost:8084/api/v1/eodhd/stock
+    description: Development server
+  - url: https://api.aevorex.com/api/v1/eodhd/stock
+    description: Production server
+
+tags:
+  - name: EODHD Stock
+    description: Real-time and historical stock market data
+
+components:
+  schemas:
+    Error:
+      type: object
+      required: [detail]
+      properties:
+        detail:
+          type: string
+          example: "EODHD API error: Invalid symbol"
+          description: Error message from EODHD API or internal server
+    ExchangeTicker:
+      type: object
+      required: [code, name, country, exchange, currency, type]
+      properties:
+        code:
+          type: string
+          example: "AAPL"
+          description: Stock ticker symbol
+        name:
+          type: string
+          example: "Apple Inc."
+          description: Company or instrument name
+        country:
+          type: string
+          example: "USA"
+          description: Country of listing
+        exchange:
+          type: string
+          example: "NASDAQ"
+          description: Exchange code
+        currency:
+          type: string
+          example: "USD"
+          description: Trading currency
+        type:
+          type: string
+          example: "Common Stock"
+          description: Type of asset (Common Stock, ETF, Fund, Preferred Stock)
+        isin:
+          type: string
+          nullable: true
+          example: "US0378331005"
+          description: International Securities Identification Number
+    StockEODData:
+      type: object
+      required: [date, open, high, low, close, adjusted_close, volume]
+      properties:
+        date:
+          type: string
+          format: date
+          example: "2024-01-02"
+          description: Trading date
+        open:
+          type: number
+          format: float
+          example: 187.15
+          description: Opening price
+        high:
+          type: number
+          format: float
+          example: 188.44
+          description: Highest price of the day
+        low:
+          type: number
+          format: float
+          example: 183.89
+          description: Lowest price of the day
+        close:
+          type: number
+          format: float
+          example: 185.64
+          description: Closing price
+        adjusted_close:
+          type: number
+          format: float
+          example: 184.0815
+          description: Adjusted closing price (for splits/dividends)
+        volume:
+          type: integer
+          example: 82488700
+          description: Trading volume
+    StockIntradayData:
+      type: object
+      required: [timestamp, gmtoffset, datetime, open, high, low, close, volume]
+      properties:
+        timestamp:
+          type: integer
+          example: 1747747800
+          description: Unix timestamp
+        gmtoffset:
+          type: integer
+          example: 0
+          description: GMT offset in seconds
+        datetime:
+          type: string
+          example: "2025-05-20 13:30:00"
+          description: Human-readable datetime
+        open:
+          type: number
+          format: float
+          example: 208.044998
+          description: Opening price
+        high:
+          type: number
+          format: float
+          example: 208.1436
+          description: Highest price
+        low:
+          type: number
+          format: float
+          example: 206.470001
+          description: Lowest price
+        close:
+          type: number
+          format: float
+          example: 207.845001
+          description: Closing price
+        volume:
+          type: integer
+          example: 9911111
+          description: Trading volume
+    StockSplitData:
+      type: object
+      required: [date, split]
+      properties:
+        date:
+          type: string
+          format: date
+          example: "1987-06-16"
+          description: Split date
+        split:
+          type: string
+          example: "2.000000/1.000000"
+          description: Split ratio (from/to)
+    StockDividendData:
+      type: object
+      required: [date, declarationDate, recordDate, paymentDate, value, unadjustedValue, currency]
+      properties:
+        date:
+          type: string
+          format: date
+          example: "1987-05-11"
+          description: Dividend date
+        declarationDate:
+          type: string
+          format: date
+          example: "1987-04-22"
+          description: Declaration date
+        recordDate:
+          type: string
+          format: date
+          example: "1987-05-15"
+          description: Record date
+        paymentDate:
+          type: string
+          format: date
+          example: "1987-06-15"
+          description: Payment date
+        period:
+          type: string
+          nullable: true
+          example: null
+          description: Dividend period
+        value:
+          type: number
+          format: float
+          example: 0.00054
+          description: Adjusted dividend value
+        unadjustedValue:
+          type: number
+          format: float
+          example: 0.12096
+          description: Unadjusted dividend value
+        currency:
+          type: string
+          example: "USD"
+          description: Currency code
+    StockAdjustedData:
+      type: object
+      required: [date, open, high, low, close, adjusted_close, volume]
+      properties:
+        date:
+          type: string
+          format: date
+          example: "2024-01-02"
+          description: Trading date
+        open:
+          type: number
+          format: float
+          example: 187.15
+          description: Opening price
+        high:
+          type: number
+          format: float
+          example: 188.44
+          description: Highest price of the day
+        low:
+          type: number
+          format: float
+          example: 183.89
+          description: Lowest price of the day
+        close:
+          type: number
+          format: float
+          example: 185.64
+          description: Closing price
+        adjusted_close:
+          type: number
+          format: float
+          example: 184.0815
+          description: Adjusted closing price (for splits/dividends)
+        volume:
+          type: integer
+          example: 82488700
+          description: Trading volume
+
+paths:
+  /exchange-tickers:
+    get:
+      tags: [EODHD Stock]
+      operationId: getExchangeTickers
+      summary: Get list of tickers for a given exchange
+      description: |
+        Retrieve a comprehensive list of tickers for a specific exchange.
+        Supports filtering by asset type and includes delisted securities.
+        
+        **Supported Exchanges:**
+        - US (all US markets)
+        - NYSE (New York Stock Exchange)
+        - NASDAQ (NASDAQ Stock Market)
+        - NYSE ARCA (NYSE Arca)
+        - OTC (Over-the-Counter)
+        - PINK (Pink Sheets)
+        
+        **Supported Asset Types:**
+        - common_stock (Common Stock)
+        - preferred_stock (Preferred Stock)
+        - etf (Exchange-Traded Fund)
+        - fund (Mutual Fund)
+        - stock (All stock types)
+      parameters:
+        - name: exchange
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [US, NYSE, NASDAQ, NYSE ARCA, OTC, PINK]
+          description: Exchange code
+          example: "US"
+        - name: delisted
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: ["1"]
+          description: Include delisted tickers (set to '1')
+          example: "1"
+        - name: type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [common_stock, preferred_stock, stock, etf, fund]
+          description: Filter by asset type
+          example: "common_stock"
+      responses:
+        '200':
+          description: List of exchange tickers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ExchangeTicker'
+              examples:
+                common_stock:
+                  summary: Common Stock Tickers
+                  value:
+                    - code: "AAPL"
+                      name: "Apple Inc."
+                      country: "USA"
+                      exchange: "NASDAQ"
+                      currency: "USD"
+                      type: "Common Stock"
+                      isin: "US0378331005"
+                    - code: "MSFT"
+                      name: "Microsoft Corporation"
+                      country: "USA"
+                      exchange: "NASDAQ"
+                      currency: "USD"
+                      type: "Common Stock"
+                      isin: "US5949181045"
+                etf:
+                  summary: ETF Tickers
+                  value:
+                    - code: "SPY"
+                      name: "SPDR S&P 500 ETF Trust"
+                      country: "USA"
+                      exchange: "NYSE ARCA"
+                      currency: "USD"
+                      type: "ETF"
+                      isin: "US78462F1030"
+                    - code: "QQQ"
+                      name: "Invesco QQQ Trust"
+                      country: "USA"
+                      exchange: "NASDAQ"
+                      currency: "USD"
+                      type: "ETF"
+                      isin: "US46090E1038"
+                preferred_stock:
+                  summary: Preferred Stock Tickers
+                  value:
+                    - code: "ABR-P-D"
+                      name: "Arbor Realty Trust Inc | 6.375% Series D Cumulative"
+                      country: "USA"
+                      exchange: "NYSE"
+                      currency: "USD"
+                      type: "Preferred Stock"
+                      isin: "US0389238769"
+                    - code: "ABR-P-E"
+                      name: "Arbor Realty Trust Inc | 6.25% Series E Cumulative"
+                      country: "USA"
+                      exchange: "NYSE"
+                      currency: "USD"
+                      type: "Preferred Stock"
+                      isin: "US0389238854"
+        '400':
+          description: Bad request - invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      x-capabilities:
+        - "Exchange ticker listings"
+        - "Asset type filtering"
+        - "Delisted securities support"
+        - "International markets"
+        - "Professional data quality"
+      x-limitations:
+        - "Rate limited by EODHD API"
+        - "Requires valid API key"
+        - "Data availability depends on exchange"
+      x-roadmap:
+        - "Real-time ticker updates"
+        - "Advanced filtering options"
+        - "Market cap and sector filters"
+      x-source: "EODHD API - exchange-symbol-list endpoint"
+
+  /eod:
+    get:
+      tags: [EODHD Stock]
+      operationId: getEODData
+      summary: Get End of Day (EOD) stock data
+      description: |
+        Retrieve historical End of Day (EOD) stock data for a specific symbol.
+        Includes OHLCV data with adjusted closing prices.
+        
+        **Data Features:**
+        - OHLCV (Open, High, Low, Close, Volume) data
+        - Adjusted closing prices for splits/dividends
+        - Historical coverage back to IPO
+        - Professional-grade data quality
+        
+        **Date Range:**
+        - Default: Last 30 days if no date range specified
+        - Custom range: Use from/to parameters
+        - Format: YYYY-MM-DD
+      parameters:
+        - name: symbol
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Stock ticker symbol
+          example: "AAPL"
+        - name: from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+          description: Start date (YYYY-MM-DD)
+          example: "2024-01-01"
+        - name: to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+          description: End date (YYYY-MM-DD)
+          example: "2024-01-31"
+      responses:
+        '200':
+          description: EOD stock data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StockEODData'
+              examples:
+                aapl_data:
+                  summary: Apple Inc. EOD Data
+                  value:
+                    - date: "2024-01-02"
+                      open: 187.15
+                      high: 188.44
+                      low: 183.89
+                      close: 185.64
+                      adjusted_close: 184.0815
+                      volume: 82488700
+                    - date: "2024-01-03"
+                      open: 184.22
+                      high: 185.88
+                      low: 183.43
+                      close: 184.25
+                      adjusted_close: 182.7032
+                      volume: 58414500
+                    - date: "2024-01-04"
+                      open: 184.25
+                      high: 186.25
+                      low: 183.25
+                      close: 185.14
+                      adjusted_close: 183.5982
+                      volume: 61234500
+        '400':
+          description: Bad request - invalid symbol or date format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Symbol not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      x-capabilities:
+        - "Historical EOD data"
+        - "OHLCV data"
+        - "Adjusted prices"
+        - "Volume data"
+        - "Date range filtering"
+      x-limitations:
+        - "Rate limited by EODHD API"
+        - "Requires valid API key"
+        - "Data availability depends on symbol"
+      x-roadmap:
+        - "Real-time EOD updates"
+        - "Extended historical coverage"
+        - "Multiple timeframe support"
+      x-source: "EODHD API - eod endpoint"
+
+  /intraday:
+    get:
+      tags: [EODHD Stock]
+      operationId: getIntradayData
+      summary: Get intraday OHLCV stock data
+      description: |
+        Retrieve intraday stock data with multiple timeframe options.
+        Provides real-time and historical intraday OHLCV data.
+        
+        **Supported Intervals:**
+        - 1m (1 minute)
+        - 5m (5 minutes)
+        - 15m (15 minutes)
+        - 1h (1 hour)
+        - 4h (4 hours)
+        - 1d (1 day)
+        
+        **Data Features:**
+        - Real-time intraday data
+        - Multiple timeframe support
+        - OHLCV data
+        - Timestamp-based format
+        
+        **Note:** Date parameters (from/to) are not supported for intraday data.
+        The API returns the most recent intraday data available.
+      parameters:
+        - name: symbol
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Stock ticker symbol
+          example: "AAPL"
+        - name: interval
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [1m, 5m, 15m, 1h, 4h, 1d]
+            default: "5m"
+          description: Data interval
+          example: "1h"
+        - name: from
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Start datetime (not supported for intraday)
+          example: null
+        - name: to
+          in: query
+          required: false
+          schema:
+            type: string
+          description: End datetime (not supported for intraday)
+          example: null
+      responses:
+        '200':
+          description: Intraday stock data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StockIntradayData'
+              examples:
+                aapl_intraday:
+                  summary: Apple Inc. Intraday Data (1h)
+                  value:
+                    - timestamp: 1747747800
+                      gmtoffset: 0
+                      datetime: "2025-05-20 13:30:00"
+                      open: 208.044998
+                      high: 208.1436
+                      low: 206.470001
+                      close: 207.845001
+                      volume: 9911111
+                    - timestamp: 1747751400
+                      gmtoffset: 0
+                      datetime: "2025-05-20 14:30:00"
+                      open: 207.830001
+                      high: 208.470001
+                      low: 207.220001
+                      close: 207.634292
+                      volume: 3762244
+                    - timestamp: 1747755000
+                      gmtoffset: 0
+                      datetime: "2025-05-20 15:30:00"
+                      open: 207.634292
+                      high: 208.25
+                      low: 207.25
+                      close: 207.75
+                      volume: 2845678
+        '400':
+          description: Bad request - invalid symbol or interval
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Symbol not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      x-capabilities:
+        - "Real-time intraday data"
+        - "Multiple timeframes"
+        - "OHLCV data"
+        - "Timestamp format"
+        - "Volume data"
+      x-limitations:
+        - "Rate limited by EODHD API"
+        - "Requires valid API key"
+        - "Date range not supported"
+        - "Data availability depends on symbol"
+      x-roadmap:
+        - "Extended timeframe support"
+        - "Real-time streaming"
+        - "Advanced technical indicators"
+      x-source: "EODHD API - intraday endpoint"
+
+  /splits:
+    get:
+      tags: [EODHD Stock]
+      operationId: getStockSplits
+      summary: Get stock splits data
+      description: |
+        Retrieve historical stock split data for a specific symbol.
+        Includes split dates and ratios.
+        
+        **Data Features:**
+        - Split dates
+        - Split ratios (from/to format)
+        - Historical coverage
+        - Professional-grade data
+        
+        **Split Ratio Format:**
+        - "2.000000/1.000000" = 2:1 split
+        - "3.000000/1.000000" = 3:1 split
+        - "1.000000/2.000000" = 1:2 reverse split
+      parameters:
+        - name: symbol
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Stock ticker symbol
+          example: "AAPL"
+      responses:
+        '200':
+          description: Stock splits data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StockSplitData'
+              examples:
+                aapl_splits:
+                  summary: Apple Inc. Stock Splits
+                  value:
+                    - date: "1987-06-16"
+                      split: "2.000000/1.000000"
+                    - date: "2000-06-21"
+                      split: "2.000000/1.000000"
+                    - date: "2005-02-28"
+                      split: "2.000000/1.000000"
+                    - date: "2014-06-09"
+                      split: "7.000000/1.000000"
+                    - date: "2020-08-31"
+                      split: "4.000000/1.000000"
+        '400':
+          description: Bad request - invalid symbol
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Symbol not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      x-capabilities:
+        - "Historical split data"
+        - "Split ratios"
+        - "Split dates"
+        - "Professional data quality"
+      x-limitations:
+        - "Rate limited by EODHD API"
+        - "Requires valid API key"
+        - "Data availability depends on symbol"
+      x-roadmap:
+        - "Real-time split notifications"
+        - "Split impact analysis"
+        - "Extended historical coverage"
+      x-source: "EODHD API - splits endpoint"
+
+  /dividends:
+    get:
+      tags: [EODHD Stock]
+      operationId: getStockDividends
+      summary: Get stock dividends data
+      description: |
+        Retrieve historical dividend data for a specific symbol.
+        Includes dividend dates, values, and payment information.
+        
+        **Data Features:**
+        - Dividend dates
+        - Declaration, record, and payment dates
+        - Adjusted and unadjusted values
+        - Currency information
+        - Historical coverage
+        
+        **Dividend Information:**
+        - Declaration Date: When dividend was announced
+        - Record Date: Shareholder record date
+        - Payment Date: When dividend is paid
+        - Value: Adjusted dividend amount
+        - Unadjusted Value: Original dividend amount
+      parameters:
+        - name: symbol
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Stock ticker symbol
+          example: "AAPL"
+      responses:
+        '200':
+          description: Stock dividends data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StockDividendData'
+              examples:
+                aapl_dividends:
+                  summary: Apple Inc. Dividends
+                  value:
+                    - date: "1987-05-11"
+                      declarationDate: "1987-04-22"
+                      recordDate: "1987-05-15"
+                      paymentDate: "1987-06-15"
+                      period: null
+                      value: 0.00054
+                      unadjustedValue: 0.12096
+                      currency: "USD"
+                    - date: "1987-08-10"
+                      declarationDate: "1987-07-31"
+                      recordDate: "1987-08-14"
+                      paymentDate: "1987-09-15"
+                      period: null
+                      value: 0.00054
+                      unadjustedValue: 0.06048
+                      currency: "USD"
+                    - date: "1987-11-09"
+                      declarationDate: "1987-10-30"
+                      recordDate: "1987-11-13"
+                      paymentDate: "1987-12-15"
+                      period: null
+                      value: 0.00054
+                      unadjustedValue: 0.06048
+                      currency: "USD"
+        '400':
+          description: Bad request - invalid symbol
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Symbol not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      x-capabilities:
+        - "Historical dividend data"
+        - "Dividend dates"
+        - "Payment information"
+        - "Adjusted values"
+        - "Currency support"
+      x-limitations:
+        - "Rate limited by EODHD API"
+        - "Requires valid API key"
+        - "Data availability depends on symbol"
+      x-roadmap:
+        - "Real-time dividend notifications"
+        - "Dividend yield calculations"
+        - "Extended historical coverage"
+      x-source: "EODHD API - div endpoint"
+
+  /adjusted:
+    get:
+      tags: [EODHD Stock]
+      operationId: getAdjustedData
+      summary: Get adjusted stock data (EOD with splits/dividends applied)
+      description: |
+        Retrieve End of Day (EOD) stock data with splits and dividends applied.
+        This provides adjusted prices that account for corporate actions.
+        
+        **Data Features:**
+        - OHLCV data with adjustments
+        - Split and dividend adjustments
+        - Historical coverage
+        - Professional-grade data quality
+        
+        **Adjustments:**
+        - Stock splits: Prices adjusted for split ratios
+        - Dividends: Prices adjusted for dividend payments
+        - Corporate actions: All relevant adjustments applied
+        
+        **Use Cases:**
+        - Technical analysis
+        - Backtesting
+        - Performance calculations
+        - Charting applications
+      parameters:
+        - name: symbol
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Stock ticker symbol
+          example: "AAPL"
+        - name: from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+          description: Start date (YYYY-MM-DD)
+          example: "2024-01-01"
+        - name: to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+          description: End date (YYYY-MM-DD)
+          example: "2024-01-31"
+      responses:
+        '200':
+          description: Adjusted stock data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StockAdjustedData'
+              examples:
+                aapl_adjusted:
+                  summary: Apple Inc. Adjusted Data
+                  value:
+                    - date: "2024-01-02"
+                      open: 187.15
+                      high: 188.44
+                      low: 183.89
+                      close: 185.64
+                      adjusted_close: 184.0815
+                      volume: 82488700
+                    - date: "2024-01-03"
+                      open: 184.22
+                      high: 185.88
+                      low: 183.43
+                      close: 184.25
+                      adjusted_close: 182.7032
+                      volume: 58414500
+                    - date: "2024-01-04"
+                      open: 184.25
+                      high: 186.25
+                      low: 183.25
+                      close: 185.14
+                      adjusted_close: 183.5982
+                      volume: 61234500
+        '400':
+          description: Bad request - invalid symbol or date format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Symbol not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      x-capabilities:
+        - "Adjusted EOD data"
+        - "Split adjustments"
+        - "Dividend adjustments"
+        - "OHLCV data"
+        - "Date range filtering"
+      x-limitations:
+        - "Rate limited by EODHD API"
+        - "Requires valid API key"
+        - "Data availability depends on symbol"
+      x-roadmap:
+        - "Real-time adjustments"
+        - "Extended historical coverage"
+        - "Advanced adjustment calculations"
+      x-source: "EODHD API - eod endpoint with adjusted parameter"

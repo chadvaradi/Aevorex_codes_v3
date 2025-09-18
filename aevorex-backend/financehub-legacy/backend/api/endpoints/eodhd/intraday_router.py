@@ -9,6 +9,11 @@ from datetime import datetime
 from backend.api.deps import get_http_client
 from backend.config import settings
 from backend.config.eodhd import settings as eodhd_settings
+from backend.api.endpoints.shared.response_builder import (
+    create_eodhd_success_response,
+    create_eodhd_error_response,
+    CacheStatus
+)
 
 router = APIRouter()
 
@@ -31,7 +36,15 @@ async def get_intraday_data(
             from_dt = datetime.strptime(from_date, "%Y-%m-%d")
             params["from"] = int(from_dt.timestamp())
         except ValueError:
-            return JSONResponse(status_code=400, content={"error": "Invalid from_date format. Use YYYY-MM-DD"})
+            return JSONResponse(
+                content=create_eodhd_error_response(
+                    message="Invalid from_date format. Use YYYY-MM-DD",
+                    error_code="INVALID_DATE_FORMAT",
+                    symbol=symbol,
+                    data_type="intraday"
+                ),
+                status_code=400
+            )
     
     if to_date:
         try:
@@ -39,7 +52,15 @@ async def get_intraday_data(
             to_dt = datetime.strptime(to_date, "%Y-%m-%d")
             params["to"] = int(to_dt.timestamp())
         except ValueError:
-            return JSONResponse(status_code=400, content={"error": "Invalid to_date format. Use YYYY-MM-DD"})
+            return JSONResponse(
+                content=create_eodhd_error_response(
+                    message="Invalid to_date format. Use YYYY-MM-DD",
+                    error_code="INVALID_DATE_FORMAT",
+                    symbol=symbol,
+                    data_type="intraday"
+                ),
+                status_code=400
+            )
     try:
         resp = await client.get(url, params=params)
         resp.raise_for_status()
@@ -47,12 +68,28 @@ async def get_intraday_data(
         # EODHD intraday API returns CSV format, not JSON
         csv_content = resp.text
         if not csv_content.strip():
-            return JSONResponse(status_code=404, content={"error": "No intraday data available for this symbol"})
+            return JSONResponse(
+                content=create_eodhd_error_response(
+                    message="No intraday data available for this symbol",
+                    error_code="NO_DATA_AVAILABLE",
+                    symbol=symbol,
+                    data_type="intraday"
+                ),
+                status_code=404
+            )
         
         # Parse CSV and convert to JSON
         lines = csv_content.strip().split('\n')
         if len(lines) < 2:
-            return JSONResponse(status_code=404, content={"error": "No intraday data available for this symbol"})
+            return JSONResponse(
+                content=create_eodhd_error_response(
+                    message="No intraday data available for this symbol",
+                    error_code="NO_DATA_AVAILABLE",
+                    symbol=symbol,
+                    data_type="intraday"
+                ),
+                status_code=404
+            )
         
         headers = lines[0].split(',')
         data_points = []
@@ -81,12 +118,26 @@ async def get_intraday_data(
                 
                 data_points.append(data_point)
         
-        return JSONResponse(content={
-            "symbol": symbol,
-            "interval": interval,
-            "data": data_points,
-            "count": len(data_points)
-        })
+        # MCP-ready response with standardized format
+        return JSONResponse(
+            content=create_eodhd_success_response(
+                data=data_points,
+                data_type="intraday",
+                symbol=symbol,
+                frequency="intraday",
+                cache_status=CacheStatus.FRESH,
+                provider_meta={"interval": interval, "from": from_date, "to": to_date, "count": len(data_points)}
+            ),
+            status_code=200
+        )
         
     except Exception as e:
-        return JSONResponse(status_code=500, content={"error": str(e)})
+        return JSONResponse(
+            content=create_eodhd_error_response(
+                message=f"EODHD Intraday API error: {str(e)}",
+                error_code="EODHD_INTRADAY_ERROR",
+                symbol=symbol,
+                data_type="intraday"
+            ),
+            status_code=500
+        )

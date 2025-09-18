@@ -24,6 +24,7 @@ import logging
 
 from backend.utils.cache_service import CacheService
 from backend.core.fetchers.macro.ecb_client.specials.fed_yield_curve import fetch_fed_policy_rates
+from backend.api.endpoints.shared.response_builder import StandardResponseBuilder, MacroProvider, CacheStatus
 
 def get_cache_service() -> CacheService:
     """Get a cache service instance."""
@@ -34,7 +35,8 @@ router = APIRouter(tags=["Macro"])
 
 @router.get("/rates", summary="Fed Policy Rates - Complete Monetary Policy Key Rates")
 async def get_fed_policy_rates(
-    series: list[str] = Query(default=["EFFR"], description="FRED series symbols for monetary policy rates"),
+    # Changed series parameter to list[str] with default ["EFFR"]
+    series: list[str] = Query(default=["EFFR"], description="FRED series symbols for monetary policy rates (comma-separated or multiple parameters)"),
     start_date: str | None = Query(default=None, description="Start date (ISO format)"),
     end_date: str | None = Query(default=None, description="End date (ISO format)"),
     force_refresh: bool = Query(default=False, description="Force refresh from FRED"),
@@ -52,55 +54,90 @@ async def get_fed_policy_rates(
     
     **Usage Examples:**
     - Single rate: `?series=FEDFUNDS`
-    - Target range: `?series=DFEDTARU&series=DFEDTARL`
+    - Comma-separated: `?series=FEDFUNDS,DFEDTARU,DFEDTARL`
+    - Multiple parameters: `?series=DFEDTARU&series=DFEDTARL`
     - All key rates: `?series=FEDFUNDS&series=DFEDTARU&series=DFEDTARL&series=IORB`
     - Date range: `?series=FEDFUNDS&start_date=2025-09-01&end_date=2025-09-15`
     
-    **Note:** Multiple series must be requested using separate `?series=` parameters, not comma-separated values.
+    **Note:** Multiple series can be requested using either comma-separated values or separate `?series=` parameters.
+    
+    **Returns MCP-Ready Response Format:**
+    - status: "success" | "error"
+    - data: Fed policy rates data with series breakdown
+    - meta: MCP-compatible metadata including:
+      - provider: "fred"
+      - cache_status: "fresh" | "cached" | "error"
+      - series_id: comma-separated series list
+      - frequency: "daily"
+      - units: "percent"
+      - last_updated: ISO timestamp
+      - mcp_ready: true
     
     **Data Source:** Federal Reserve Economic Data (FRED) API
     **Update Frequency:** Daily
     **Cache:** 1 hour TTL
     """
     try:
-        # Compose cache key
-        cache_key = f"fed_policy_rates:{','.join(series)}:{start_date}:{end_date}"
+        # Normalize series parameter to handle comma-separated values within each list element
+        # and deduplicate and sort the final list for consistent cache keys and processing
+        expanded_series = []
+        for s in series:
+            expanded_series.extend([item.strip() for item in s.split(",") if item.strip()])
+        series_list = sorted(set(expanded_series))  # deduplicate and sort
+
+        # Compose cache key using sorted series list for consistency
+        cache_key = f"fed_policy_rates:{','.join(series_list)}:{start_date}:{end_date}"
         if not force_refresh:
             cached = await cache.get(cache_key)
             if cached is not None:
                 return JSONResponse(
                     status_code=200,
-                    content={
-                        "source": "FRED",
-                        "symbols": series,
-                        "date_range": {"start": start_date, "end": end_date},
-                        "data": cached,
-                        "cached": True,
-                    }
+                    content=StandardResponseBuilder.create_macro_success_response(
+                        provider=MacroProvider.FRED,
+                        data=cached,
+                        series_id=",".join(series_list),
+                        start_date=start_date,
+                        end_date=end_date,
+                        frequency="daily",
+                        units="percent",
+                        cache_status=CacheStatus.CACHED
+                    )
                 )
-        # Fetch from service
-        data = await fetch_fed_policy_rates(
-            series=series,
-            start_date=start_date,
-            end_date=end_date,
-        )
-        # Cache result
+        # If fetch_fed_policy_rates does not support multi-series directly,
+        # fetch each series separately and aggregate results
+        data = {}
+        for symbol in series_list:
+            result = await fetch_fed_policy_rates(
+                series=[symbol],
+                start_date=start_date,
+                end_date=end_date,
+            )
+            data[symbol] = result
+
+        # Cache aggregated result
         await cache.set(cache_key, data, ttl=60*60)  # 1 hour
         return JSONResponse(
             status_code=200,
-            content={
-                "source": "FRED",
-                "symbols": series,
-                "date_range": {"start": start_date, "end": end_date},
-                "data": data,
-                "cached": False,
-            }
+            content=StandardResponseBuilder.create_macro_success_response(
+                provider=MacroProvider.FRED,
+                data=data,
+                series_id=",".join(series_list),
+                start_date=start_date,
+                end_date=end_date,
+                frequency="daily",
+                units="percent",
+                cache_status=CacheStatus.FRESH
+            )
         )
     except Exception as e:
         logging.exception("Failed to fetch Fed policy rates.")
-        raise HTTPException(
+        return JSONResponse(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Could not fetch Federal Reserve policy rates at this time."
+            content=StandardResponseBuilder.create_macro_error_response(
+                provider=MacroProvider.FRED,
+                message="Could not fetch Federal Reserve policy rates at this time.",
+                error_code="SERVICE_UNAVAILABLE"
+            )
         )
 
 __all__ = ["router"]

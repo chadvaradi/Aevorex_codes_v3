@@ -1,0 +1,361 @@
+# Standard Response Template for Cursor Agent Optimization
+# This template ensures consistent structure across all macro endpoints
+
+# =============================================================================
+# GLOBAL SECURITY & AUTH STRUCTURE
+# =============================================================================
+security:
+  - {}  # Currently free access, future: API key, premium tiers
+
+# =============================================================================
+# STANDARD RESPONSE ENVELOPE (ALL ENDPOINTS)
+# =============================================================================
+standard_response_schema:
+  type: object
+  required: [status, meta, data]
+  properties:
+    status:
+      type: string
+      enum: [success, error, warning]
+      description: "Consistent status field across all endpoints"
+    meta:
+      type: object
+      required: [source, last_updated, cache_status]
+      properties:
+        source:
+          type: string
+          enum: [fred, ecb, mnb, ust, emmi]
+          description: "Data source identifier"
+        last_updated:
+          type: string
+          format: date-time
+          description: "ISO timestamp of last data update"
+        cache_status:
+          type: string
+          enum: [cached, fresh, expired]
+          description: "Cache status for the response"
+        series_id:
+          type: string
+          description: "Series identifier (when applicable)"
+        frequency:
+          type: string
+          description: "Data frequency (daily, monthly, etc.)"
+        units:
+          type: string
+          description: "Data units (percent, index, etc.)"
+        limit:
+          type: integer
+          description: "Number of observations returned"
+        start_date:
+          type: string
+          format: date
+          description: "Start date of data range"
+        end_date:
+          type: string
+          format: date
+          description: "End date of data range"
+    data:
+      type: object
+      description: "Actual data payload - structure varies by endpoint type"
+
+# =============================================================================
+# STANDARD ERROR SCHEMA (ALL ENDPOINTS)
+# =============================================================================
+standard_error_schema:
+  type: object
+  required: [status, message]
+  properties:
+    status:
+      type: string
+      enum: [error]
+      example: "error"
+    message:
+      type: string
+      description: "Human-readable error message"
+    error_code:
+      type: string
+      description: "Machine-readable error code"
+    available_options:
+      type: array
+      items:
+        type: string
+      description: "Available alternatives (e.g., available_tenors, available_series)"
+    retry_after:
+      type: integer
+      description: "Seconds to wait before retry (for rate limits)"
+
+# =============================================================================
+# MACHINE-READABLE CAPABILITIES SCHEMA
+# =============================================================================
+x_capabilities_schema:
+  type: object
+  properties:
+    historical:
+      type: boolean
+      description: "Supports historical data queries"
+    latest:
+      type: boolean
+      description: "Supports latest data queries"
+    date_range:
+      type: boolean
+      description: "Supports start_date/end_date parameters"
+    limit_param:
+      type: boolean
+      description: "Supports limit parameter"
+    frequency_transform:
+      type: boolean
+      description: "Supports frequency transformation"
+    units_transform:
+      type: boolean
+      description: "Supports units transformation"
+    multi_series:
+      type: boolean
+      description: "Supports multiple series in single request"
+    force_refresh:
+      type: boolean
+      description: "Supports force_refresh parameter"
+    cache_ttl:
+      type: string
+      enum: [null, "1h", "24h", "1w"]
+      description: "Cache time-to-live"
+    response_envelope:
+      type: string
+      enum: [data-envelope, top-level]
+      description: "Response structure type"
+    auth_required:
+      type: string
+      enum: [free, premium, api_key]
+      description: "Authentication requirement level"
+
+# =============================================================================
+# STRUCTURED LIMITATIONS & ISSUES
+# =============================================================================
+x_limitations_schema:
+  type: array
+  items:
+    type: object
+    properties:
+      category:
+        type: string
+        enum: [response_structure, parameters, data_quality, performance]
+      severity:
+        type: string
+        enum: [critical, warning, info]
+      message:
+        type: string
+        description: "Human-readable limitation description"
+      technical_details:
+        type: string
+        description: "Technical details for developers"
+      workaround:
+        type: string
+        description: "Suggested workaround if available"
+
+# =============================================================================
+# STRUCTURED ROADMAP
+# =============================================================================
+x_roadmap_schema:
+  type: array
+  items:
+    type: object
+    properties:
+      feature:
+        type: string
+        description: "Feature name"
+      priority:
+        type: string
+        enum: [high, medium, low]
+      estimated_effort:
+        type: string
+        enum: [small, medium, large]
+      description:
+        type: string
+        description: "Feature description"
+
+# =============================================================================
+# ENDPOINT-SPECIFIC DATA SCHEMAS
+# =============================================================================
+
+# Curve Data Schema (for yield curves)
+curve_data_schema:
+  type: object
+  properties:
+    curve:
+      type: object
+      additionalProperties:
+        type: number
+      description: "Maturity -> yield mapping"
+    metadata:
+      type: object
+      properties:
+        url:
+          type: string
+          description: "Source URL"
+        description:
+          type: string
+          description: "Data description"
+        currency:
+          type: string
+          description: "Currency code"
+        data_type:
+          type: string
+          description: "Type of financial data"
+
+# Time Series Data Schema (for observations)
+timeseries_data_schema:
+  type: object
+  properties:
+    observations:
+      type: array
+      items:
+        $ref: '#/components/schemas/Observation'
+    statistics:
+      $ref: '#/components/schemas/Statistics'
+    data_type_info:
+      type: object
+      properties:
+        data_type:
+          type: string
+          description: "Type of data (spot, index, etc.)"
+        quality:
+          type: string
+          enum: [high, medium, low]
+        description:
+          type: string
+          description: "Data quality description"
+
+# =============================================================================
+# EXAMPLE ENDPOINT STRUCTURE
+# =============================================================================
+example_endpoint:
+  get:
+    tags: [Example]
+    operationId: getExampleData
+    summary: "Example endpoint with standardized structure"
+    description: |
+      **Capabilities**
+      - Standardized response envelope
+      - Machine-readable capabilities
+      - Consistent error handling
+      
+      **Response Structure**
+      - Always uses `data` envelope
+      - Consistent `meta` block
+      - Standardized error format
+    x-capabilities:
+      historical: true
+      latest: true
+      date_range: true
+      limit_param: true
+      frequency_transform: false
+      units_transform: false
+      multi_series: false
+      force_refresh: true
+      cache_ttl: "1h"
+      response_envelope: "data-envelope"
+      auth_required: "free"
+    x-limitations:
+      - category: "response_structure"
+        severity: "info"
+        message: "Uses data envelope structure"
+        technical_details: "All data is nested under .data key"
+        workaround: "Access data via .data.observations or .data.curve"
+    x-roadmap:
+      - feature: "Enhanced filtering"
+        priority: "medium"
+        estimated_effort: "medium"
+        description: "Add advanced filtering options"
+    x-source: "example"
+    responses:
+      '200':
+        description: "Successful response"
+        headers:
+          Cache-Control:
+            $ref: '#/components/headers/Cache-Control'
+          Content-Type:
+            $ref: '#/components/headers/Content-Type'
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/standard_response_schema'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/timeseries_data_schema'
+            example:
+              status: "success"
+              meta:
+                source: "example"
+                last_updated: "2025-01-16T10:00:00Z"
+                cache_status: "fresh"
+                series_id: "EXAMPLE.1"
+                frequency: "monthly"
+                units: "percent"
+                limit: 10
+                start_date: "2024-01-01"
+                end_date: "2025-01-01"
+              data:
+                observations:
+                  - date: "2024-12-01"
+                    value: 2.5
+                  - date: "2025-01-01"
+                    value: 2.3
+                statistics:
+                  count: 2
+                  latest: 2.3
+                  min: 2.3
+                  max: 2.5
+                  avg: 2.4
+                data_type_info:
+                  data_type: "index"
+                  quality: "high"
+                  description: "Example economic indicator"
+      '400':
+        description: "Bad Request"
+        headers:
+          Cache-Control:
+            $ref: '#/components/headers/Cache-Control'
+          Content-Type:
+            $ref: '#/components/headers/Content-Type'
+        content:
+          application/json:
+            schema:
+              $ref: '#/standard_error_schema'
+            example:
+              status: "error"
+              message: "Invalid date range provided"
+              error_code: "INVALID_DATE_RANGE"
+              available_options: ["2020-01-01", "2025-12-31"]
+      '404':
+        description: "Not Found"
+        headers:
+          Cache-Control:
+            $ref: '#/components/headers/Cache-Control'
+          Content-Type:
+            $ref: '#/components/headers/Content-Type'
+        content:
+          application/json:
+            schema:
+              $ref: '#/standard_error_schema'
+            example:
+              status: "error"
+              message: "Series not found"
+              error_code: "SERIES_NOT_FOUND"
+              available_options: ["SERIES1", "SERIES2"]
+      '500':
+        description: "Internal Server Error"
+        headers:
+          Cache-Control:
+            $ref: '#/components/headers/Cache-Control'
+          Content-Type:
+            $ref: '#/components/headers/Content-Type'
+        content:
+          application/json:
+            schema:
+              $ref: '#/standard_error_schema'
+            example:
+              status: "error"
+              message: "Internal server error"
+              error_code: "INTERNAL_ERROR"
+              retry_after: 60

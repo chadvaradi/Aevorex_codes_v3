@@ -16,6 +16,11 @@ from backend.models.eodhd.exchange_models import (
 )
 from backend.api.deps import get_http_client
 from backend.core.services.trading_hours_service import TradingHoursService
+from backend.api.endpoints.shared.response_builder import (
+    create_eodhd_success_response,
+    create_eodhd_error_response,
+    CacheStatus
+)
 
 router = APIRouter()
 
@@ -135,9 +140,35 @@ async def list_exchanges(http_client: httpx.AsyncClient = Depends(get_http_clien
         resp = await http_client.get(url, params=params)
         resp.raise_for_status()
         data = resp.json()
-        return JSONResponse(content=data)
+        
+        # MCP-ready response with standardized format
+        return JSONResponse(
+            content=create_eodhd_success_response(
+                data=data,
+                data_type="exchanges_list",
+                frequency="static",
+                cache_status=CacheStatus.FRESH
+            ),
+            status_code=200
+        )
+    except httpx.HTTPStatusError as e:
+        return JSONResponse(
+            content=create_eodhd_error_response(
+                message=f"EODHD API error: {e.response.text}",
+                error_code="EODHD_API_ERROR",
+                data_type="exchanges_list"
+            ),
+            status_code=e.response.status_code
+        )
     except Exception as e:
-        return JSONResponse(status_code=500, content={"error": str(e)})
+        return JSONResponse(
+            content=create_eodhd_error_response(
+                message=f"Internal server error: {str(e)}",
+                error_code="INTERNAL_ERROR",
+                data_type="exchanges_list"
+            ),
+            status_code=500
+        )
 
 @router.get("/{exchange}/tickers")
 async def list_exchange_tickers(
@@ -151,11 +182,40 @@ async def list_exchange_tickers(
         resp = await http_client.get(url, params=params)
         resp.raise_for_status()
         data = resp.json()
-        return JSONResponse(content=data)
+        
+        # MCP-ready response with standardized format
+        return JSONResponse(
+            content=create_eodhd_success_response(
+                data=data,
+                data_type="exchange_tickers",
+                symbol=exchange,
+                frequency="static",
+                cache_status=CacheStatus.FRESH
+            ),
+            status_code=200
+        )
+    except httpx.HTTPStatusError as e:
+        return JSONResponse(
+            content=create_eodhd_error_response(
+                message=f"EODHD API error: {e.response.text}",
+                error_code="EODHD_API_ERROR",
+                symbol=exchange,
+                data_type="exchange_tickers"
+            ),
+            status_code=e.response.status_code
+        )
     except Exception as e:
-        return JSONResponse(status_code=500, content={"error": str(e)})
+        return JSONResponse(
+            content=create_eodhd_error_response(
+                message=f"Internal server error: {str(e)}",
+                error_code="INTERNAL_ERROR",
+                symbol=exchange,
+                data_type="exchange_tickers"
+            ),
+            status_code=500
+        )
 
-@router.get("/{exchange}/hours", response_model=ExchangeHoursResponse)
+@router.get("/{exchange}/hours")
 async def exchange_hours(exchange: str):
     """Get trading hours and holidays for a specific exchange using EODHD API."""
     exchange_upper = exchange.upper()
@@ -179,18 +239,35 @@ async def exchange_hours(exchange: str):
                         "source": "eodhd_api"
                     }
                 }
-                return ExchangeHoursResponse(**response_data)
+                
+                # MCP-ready response with standardized format
+                return JSONResponse(
+                    content=create_eodhd_success_response(
+                        data=response_data,
+                        data_type="exchange_hours",
+                        symbol=exchange_upper,
+                        frequency="static",
+                        cache_status=CacheStatus.FRESH,
+                        provider_meta={"source": "eodhd_api"}
+                    ),
+                    status_code=200
+                )
         
         # Fallback to hardcoded data
         if exchange_upper not in EXCHANGE_TRADING_HOURS:
-            raise HTTPException(
-                status_code=404, 
-                detail=f"Exchange '{exchange}' not found. Supported exchanges: {list(EXCHANGE_TRADING_HOURS.keys())}"
+            return JSONResponse(
+                content=create_eodhd_error_response(
+                    message=f"Exchange '{exchange}' not found. Supported exchanges: {list(EXCHANGE_TRADING_HOURS.keys())}",
+                    error_code="EXCHANGE_NOT_FOUND",
+                    symbol=exchange,
+                    data_type="exchange_hours"
+                ),
+                status_code=404
             )
         
         exchange_data = EXCHANGE_TRADING_HOURS[exchange_upper]
         
-        # Build response with proper Pydantic models
+        # Build response with proper structure
         response_data = {
             "exchange": exchange_data["exchange"],
             "trading_hours": exchange_data["trading_hours"],
@@ -203,12 +280,28 @@ async def exchange_hours(exchange: str):
             }
         }
         
-        return ExchangeHoursResponse(**response_data)
+        # MCP-ready response with standardized format
+        return JSONResponse(
+            content=create_eodhd_success_response(
+                data=response_data,
+                data_type="exchange_hours",
+                symbol=exchange_upper,
+                frequency="static",
+                cache_status=CacheStatus.FRESH,
+                provider_meta={"source": "fallback_data"}
+            ),
+            status_code=200
+        )
         
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error getting trading hours for exchange '{exchange}': {str(e)}"
+        return JSONResponse(
+            content=create_eodhd_error_response(
+                message=f"Error getting trading hours for exchange '{exchange}': {str(e)}",
+                error_code="INTERNAL_ERROR",
+                symbol=exchange,
+                data_type="exchange_hours"
+            ),
+            status_code=500
         )
 
 @router.get("/{exchange}/status")

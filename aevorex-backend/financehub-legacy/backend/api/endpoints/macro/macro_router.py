@@ -83,6 +83,8 @@ router.include_router(fixing_handler, prefix="/fixing")
 router.include_router(fed_policy_handler, prefix="/fed-policy")
 router.include_router(fed_series_handler, prefix="/fed-series")
 router.include_router(fed_search_handler, prefix="/fed-search")
+# Add alias for /fed/series -> /fed-series/fred/series
+router.include_router(fed_series_handler, prefix="/fed")
 router.include_router(ecb_handler, prefix="/ecb")
 router.include_router(inflation_handler, prefix="/inflation")
 router.include_router(unemployment_handler, prefix="/unemployment")

@@ -8,6 +8,11 @@ from backend.config import settings
 from backend.config.eodhd import settings as eodhd_settings
 from backend.utils.logger_config import get_logger
 from backend.models.eodhd.stock_models import CryptoTicker
+from backend.api.endpoints.shared.response_builder import (
+    create_eodhd_success_response,
+    create_eodhd_error_response,
+    CacheStatus
+)
 
 logger = get_logger(__name__)
 router = APIRouter()
@@ -39,10 +44,27 @@ async def list_cryptocurrencies(
         
         # Convert to dict format for JSON response
         ticker_dicts = [ticker.model_dump() for ticker in tickers]
-        return JSONResponse(content=ticker_dicts)
+        
+        # MCP-ready response with standardized format
+        return JSONResponse(
+            content=create_eodhd_success_response(
+                data=ticker_dicts,
+                data_type="crypto_list",
+                frequency="static",
+                cache_status=CacheStatus.FRESH
+            ),
+            status_code=200
+        )
     except Exception as e:
         logger.error(f"Error fetching crypto list: {e}")
-        return JSONResponse(status_code=500, content={"error": "Failed to fetch crypto list"})
+        return JSONResponse(
+            content=create_eodhd_error_response(
+                message=f"Failed to fetch crypto list: {str(e)}",
+                error_code="CRYPTO_LIST_ERROR",
+                data_type="crypto_list"
+            ),
+            status_code=500
+        )
 
 @router.get("/{symbol}/quote")
 async def get_crypto_quote(
@@ -61,10 +83,29 @@ async def get_crypto_quote(
         raw_data = resp.json()
         
         # Real-time endpoint returns a single object, not a list
-        return JSONResponse(content=raw_data)
+        
+        # MCP-ready response with standardized format
+        return JSONResponse(
+            content=create_eodhd_success_response(
+                data=raw_data,
+                data_type="crypto_quote",
+                symbol=symbol,
+                frequency="realtime",
+                cache_status=CacheStatus.FRESH
+            ),
+            status_code=200
+        )
     except Exception as e:
         logger.error(f"Error fetching crypto quote for {symbol}: {e}")
-        return JSONResponse(status_code=500, content={"error": "Failed to fetch crypto quote"})
+        return JSONResponse(
+            content=create_eodhd_error_response(
+                message=f"Failed to fetch crypto quote: {str(e)}",
+                error_code="CRYPTO_QUOTE_ERROR",
+                symbol=symbol,
+                data_type="crypto_quote"
+            ),
+            status_code=500
+        )
 
 @router.get("/{symbol}/eod")
 async def get_crypto_eod(
@@ -95,23 +136,34 @@ async def get_crypto_eod(
         resp.raise_for_status()
         data = resp.json()
         
-        # Add helpful note about default behavior
+        # MCP-ready response with standardized format
+        provider_meta = {}
         if not from_date or not to_date:
-            if isinstance(data, list):
-                # For array responses, add metadata
-                return JSONResponse(content={
-                    "data": data,
-                    "metadata": {
-                        "symbol": symbol,
-                        "note": "Showing last 30 days by default. Use ?from=YYYY-MM-DD&to=YYYY-MM-DD for custom range.",
-                        "date_range": f"{params['from']} to {params['to']}"
-                    }
-                })
+            provider_meta["note"] = "Showing last 30 days by default. Use ?from=YYYY-MM-DD&to=YYYY-MM-DD for custom range."
+            provider_meta["date_range"] = f"{params['from']} to {params['to']}"
         
-        return JSONResponse(content=data)
+        return JSONResponse(
+            content=create_eodhd_success_response(
+                data=data,
+                data_type="crypto_eod",
+                symbol=symbol,
+                frequency="daily",
+                cache_status=CacheStatus.FRESH,
+                provider_meta=provider_meta
+            ),
+            status_code=200
+        )
     except Exception as e:
         logger.error(f"Error fetching EOD crypto data for {symbol}: {e}")
-        return JSONResponse(status_code=500, content={"error": "Failed to fetch crypto EOD data"})
+        return JSONResponse(
+            content=create_eodhd_error_response(
+                message=f"Failed to fetch crypto EOD data: {str(e)}",
+                error_code="CRYPTO_EOD_ERROR",
+                symbol=symbol,
+                data_type="crypto_eod"
+            ),
+            status_code=500
+        )
 
 @router.get("/{symbol}/intraday")
 async def get_crypto_intraday(
@@ -132,10 +184,30 @@ async def get_crypto_intraday(
         raw_data = resp.json()
         
         # Intraday endpoint returns a list of data points
-        return JSONResponse(content=raw_data)
+        
+        # MCP-ready response with standardized format
+        return JSONResponse(
+            content=create_eodhd_success_response(
+                data=raw_data,
+                data_type="crypto_intraday",
+                symbol=symbol,
+                frequency="intraday",
+                cache_status=CacheStatus.FRESH,
+                provider_meta={"interval": interval}
+            ),
+            status_code=200
+        )
     except Exception as e:
         logger.error(f"Error fetching intraday crypto data for {symbol}: {e}")
-        return JSONResponse(status_code=500, content={"error": "Failed to fetch crypto intraday data"})
+        return JSONResponse(
+            content=create_eodhd_error_response(
+                message=f"Failed to fetch crypto intraday data: {str(e)}",
+                error_code="CRYPTO_INTRADAY_ERROR",
+                symbol=symbol,
+                data_type="crypto_intraday"
+            ),
+            status_code=500
+        )
 
 @router.get("/{symbol}/history")
 async def get_crypto_history(
@@ -166,23 +238,34 @@ async def get_crypto_history(
         resp.raise_for_status()
         data = resp.json()
         
-        # Add helpful note about default behavior
+        # MCP-ready response with standardized format
+        provider_meta = {}
         if not from_date or not to_date:
-            if isinstance(data, list):
-                # For array responses, add metadata
-                return JSONResponse(content={
-                    "data": data,
-                    "metadata": {
-                        "symbol": symbol,
-                        "note": "Showing last 30 days by default. Use ?from=YYYY-MM-DD&to=YYYY-MM-DD for custom range.",
-                        "date_range": f"{params['from']} to {params['to']}"
-                    }
-                })
+            provider_meta["note"] = "Showing last 30 days by default. Use ?from=YYYY-MM-DD&to=YYYY-MM-DD for custom range."
+            provider_meta["date_range"] = f"{params['from']} to {params['to']}"
         
-        return JSONResponse(content=data)
+        return JSONResponse(
+            content=create_eodhd_success_response(
+                data=data,
+                data_type="crypto_history",
+                symbol=symbol,
+                frequency="daily",
+                cache_status=CacheStatus.FRESH,
+                provider_meta=provider_meta
+            ),
+            status_code=200
+        )
     except Exception as e:
         logger.error(f"Error fetching history crypto data for {symbol}: {e}")
-        return JSONResponse(status_code=500, content={"error": "Failed to fetch crypto history data"})
+        return JSONResponse(
+            content=create_eodhd_error_response(
+                message=f"Failed to fetch crypto history data: {str(e)}",
+                error_code="CRYPTO_HISTORY_ERROR",
+                symbol=symbol,
+                data_type="crypto_history"
+            ),
+            status_code=500
+        )
 
 @router.get("/{symbol}/splits")
 async def get_crypto_splits(
@@ -192,7 +275,15 @@ async def get_crypto_splits(
     Splits data is not supported for cryptocurrencies.
     """
     logger.error(f"Splits endpoint not supported for crypto symbol {symbol}")
-    return JSONResponse(status_code=400, content={"error": "Splits data not supported for cryptocurrencies"})
+    return JSONResponse(
+        content=create_eodhd_error_response(
+            message="Splits data not supported for cryptocurrencies",
+            error_code="CRYPTO_SPLITS_NOT_SUPPORTED",
+            symbol=symbol,
+            data_type="crypto_splits"
+        ),
+        status_code=400
+    )
 
 @router.get("/{symbol}/dividends")
 async def get_crypto_dividends(
@@ -202,7 +293,15 @@ async def get_crypto_dividends(
     Dividends data is not supported for cryptocurrencies.
     """
     logger.error(f"Dividends endpoint not supported for crypto symbol {symbol}")
-    return JSONResponse(status_code=400, content={"error": "Dividends data not supported for cryptocurrencies"})
+    return JSONResponse(
+        content=create_eodhd_error_response(
+            message="Dividends data not supported for cryptocurrencies",
+            error_code="CRYPTO_DIVIDENDS_NOT_SUPPORTED",
+            symbol=symbol,
+            data_type="crypto_dividends"
+        ),
+        status_code=400
+    )
 
 @router.get("/{symbol}/adjusted")
 async def get_crypto_adjusted(
@@ -233,23 +332,34 @@ async def get_crypto_adjusted(
         resp.raise_for_status()
         data = resp.json()
         
-        # Add helpful note about default behavior
+        # MCP-ready response with standardized format
+        provider_meta = {}
         if not from_date or not to_date:
-            if isinstance(data, list):
-                # For array responses, add metadata
-                return JSONResponse(content={
-                    "data": data,
-                    "metadata": {
-                        "symbol": symbol,
-                        "note": "Showing last 30 days by default. Use ?from=YYYY-MM-DD&to=YYYY-MM-DD for custom range.",
-                        "date_range": f"{params['from']} to {params['to']}"
-                    }
-                })
+            provider_meta["note"] = "Showing last 30 days by default. Use ?from=YYYY-MM-DD&to=YYYY-MM-DD for custom range."
+            provider_meta["date_range"] = f"{params['from']} to {params['to']}"
         
-        return JSONResponse(content=data)
+        return JSONResponse(
+            content=create_eodhd_success_response(
+                data=data,
+                data_type="crypto_adjusted",
+                symbol=symbol,
+                frequency="daily",
+                cache_status=CacheStatus.FRESH,
+                provider_meta=provider_meta
+            ),
+            status_code=200
+        )
     except Exception as e:
         logger.error(f"Error fetching adjusted crypto data for {symbol}: {e}")
-        return JSONResponse(status_code=500, content={"error": "Failed to fetch crypto adjusted data"})
+        return JSONResponse(
+            content=create_eodhd_error_response(
+                message=f"Failed to fetch crypto adjusted data: {str(e)}",
+                error_code="CRYPTO_ADJUSTED_ERROR",
+                symbol=symbol,
+                data_type="crypto_adjusted"
+            ),
+            status_code=500
+        )
 
 
 __all__ = ["router"]
